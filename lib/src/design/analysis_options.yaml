@@ -1,0 +1,18 @@
+
+include: package:flutter_lints/flutter.yaml
+
+linter:
+
+  rules:
+    avoid_print: false  
+    constant_identifier_names: false
+    avoid_unnecessary_containers: true
+    avoid_redundant_argument_values: true
+    avoid_init_to_null: false
+    prefer_final_locals: true
+    require_trailing_commas: true
+    cancel_subscriptions: true
+    prefer_const_declarations: true
+    prefer_final_in_for_each: true
+    
+

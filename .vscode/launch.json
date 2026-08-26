@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Care Context Debug",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "args": []
+        },
+        {
+            "name": "Care Context Profile",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile",
+            "args": []
+        },
+        {
+            "name": "Care Context Release",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release",
+            "args": []
+        }
+    ]
+}
