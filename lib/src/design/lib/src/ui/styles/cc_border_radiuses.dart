@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:design/design.dart';
+
+import 'cc_radiuses.dart';
 
 class CCBorderRadiuses extends BorderRadius {
   const CCBorderRadiuses.all(super.radius) : super.all();

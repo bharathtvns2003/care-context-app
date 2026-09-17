@@ -1,12 +1,23 @@
 import 'package:core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../home.dart';
 import '../../theme/app_colors.dart';
-import '../../core/api_service/contract/home_mock_contract.dart';
 import 'share_prescription_screen.dart';
 
-class PrescriptionHistoryScreen extends StatelessWidget {
+class PrescriptionHistoryScreen extends StatefulWidget {
   const PrescriptionHistoryScreen({super.key});
+
+  @override
+  State<PrescriptionHistoryScreen> createState() => _PrescriptionHistoryScreenState();
+}
+
+class _PrescriptionHistoryScreenState extends State<PrescriptionHistoryScreen> {
+  @override
+  void initState() {
+    super.initState();
+    getIt<HomeBloc>().add(LoadPrescriptionsEvent());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,70 +33,80 @@ class PrescriptionHistoryScreen extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment(-0.8, -0.8),
-          end: Alignment(0.8, 0.8),
-          colors: [Color(0xFF0D1F2D), Color(0xFF055F58)],
-          stops: [0.085, 0.915],
-        ),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(28),
-          bottomRight: Radius.circular(28),
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => CcRouteHelper.pop(),
-                    child: Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        color: AppColors.white,
-                        size: 16,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'My Prescriptions',
-                    style: GoogleFonts.sora(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.white,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  _buildStatItem('7', 'Total'),
-                  const SizedBox(width: 20),
-                  _buildStatItem('4', 'Active'),
-                  const SizedBox(width: 20),
-                  _buildStatItem('87%', 'Adherence'),
-                ],
-              ),
-            ],
+    return BlocBuilder<HomeBloc, HomeState>(
+      builder: (context, state) {
+        int total = 0;
+        int active = 0;
+        if (state is PrescriptionsLoadedState) {
+          total = state.prescriptions.length;
+          active = state.prescriptions.where((p) => p.isActive).length;
+        }
+        return Container(
+          width: double.infinity,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment(-0.8, -0.8),
+              end: Alignment(0.8, 0.8),
+              colors: [Color(0xFF0D1F2D), Color(0xFF055F58)],
+              stops: [0.085, 0.915],
+            ),
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(28),
+              bottomRight: Radius.circular(28),
+            ),
           ),
-        ),
-      ),
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => CcRouteHelper.pop(),
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.arrow_back,
+                            color: AppColors.white,
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'My Prescriptions',
+                        style: GoogleFonts.sora(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      _buildStatItem('$total', 'Total'),
+                      const SizedBox(width: 20),
+                      _buildStatItem('$active', 'Active'),
+                      const SizedBox(width: 20),
+                      _buildStatItem('87%', 'Adherence'),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -114,30 +135,53 @@ class PrescriptionHistoryScreen extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context) {
-    final mockPrescriptions = HomeMockContract.homeDataMockResponse['prescriptions'] as List<dynamic>;
-    final prescriptions = mockPrescriptions.map((p) {
-      final map = p as Map<String, dynamic>;
-      return Prescription(
-        date: map['date'] as String,
-        doctorName: map['doctorName'] as String,
-        clinic: map['clinic'] as String,
-        isActive: map['isActive'] as bool,
-        medicines: List<String>.from(map['medicines'] as List),
-      );
-    }).toList();
+    return BlocBuilder<HomeBloc, HomeState>(
+      builder: (context, state) {
+        if (state is HomeLoadingState) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (state is HomeErrorState) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(state.message),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => getIt<HomeBloc>().add(LoadPrescriptionsEvent()),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          );
+        }
+        if (state is PrescriptionsLoadedState) {
+          final prescriptions = state.prescriptions.map((entity) => Prescription(
+            date: entity.date ?? entity.uploadedAt ?? '',
+            doctorName: entity.doctorName ?? entity.title ?? 'Prescription',
+            clinic: '',
+            isActive: entity.isActive,
+            medicines: entity.medicines.isNotEmpty
+                ? entity.medicines.map((m) => m.name).toList()
+                : List.generate(entity.medicationCount ?? 0, (_) => 'Medicine'),
+          )).toList();
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 80),
-      child: Column(
-        children: [
-          _buildSearchBar(),
-          const SizedBox(height: 16),
-          ...prescriptions.map((p) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _buildPrescriptionCard(context, p),
-              )),
-        ],
-      ),
+          return SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 80),
+            child: Column(
+              children: [
+                _buildSearchBar(),
+                const SizedBox(height: 16),
+                ...prescriptions.map((p) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _buildPrescriptionCard(context, p),
+                    )),
+              ],
+            ),
+          );
+        }
+        return const SizedBox.shrink();
+      },
     );
   }
 

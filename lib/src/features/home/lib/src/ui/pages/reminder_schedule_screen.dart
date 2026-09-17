@@ -2,7 +2,6 @@ import 'package:core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/app_colors.dart';
-import '../../core/api_service/contract/home_mock_contract.dart';
 import 'add_medicine_screen.dart';
 
 class ReminderScheduleScreen extends StatelessWidget {
@@ -10,9 +9,8 @@ class ReminderScheduleScreen extends StatelessWidget {
 
   const ReminderScheduleScreen({super.key, required this.medicines});
 
-  static final Map<String, dynamic> _schema =
-      (HomeMockContract.aiExtractionMockResponse['reminderSchedule']
-          as Map<String, dynamic>);
+  static Map<String, dynamic> get _schema =>
+      RemoteConfigService.instance.getJson('reminder_ui_config');
 
   Map<String, dynamic> get _headerSchema =>
       _schema['header'] as Map<String, dynamic>;
@@ -355,7 +353,6 @@ class ReminderScheduleScreen extends StatelessWidget {
         onPressed: () {
           CcRouteHelper.pushAndPopUntil(
             CcRouteConstants.homeScreen,
-            args: medicines,
           );
         },
         style: ElevatedButton.styleFrom(

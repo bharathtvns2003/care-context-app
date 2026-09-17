@@ -1,7 +1,9 @@
-import 'package:design/design.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import 'cc_colors.dart';
+import 'cc_fonts.dart';
 
 class CCTheme {
   static ThemeData get darkTheme => ThemeData(

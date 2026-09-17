@@ -56,7 +56,12 @@ class HomeMapper {
       id: model.id,
       status: model.status,
       uploadedAt: model.uploadedAt,
+      doctorName: model.doctorName,
+      title: model.title,
+      date: model.date,
+      medicationCount: model.medicationCount,
       imageUrls: model.imageUrls,
+      thumbnailUrls: model.thumbnailUrls,
       medicines: model.medicines.map(medicineFromNetwork).toList(),
     );
   }

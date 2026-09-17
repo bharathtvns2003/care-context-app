@@ -4,30 +4,6 @@ import 'package:core/core.dart';
 import 'package:splash_screen/splash_screen.dart';
 
 class AppRoutes {
-  static LoginScreenBloc? _loginBloc;
-  static HomeBloc? _homeBloc;
-
-  static LoginScreenBloc get loginBloc {
-    _loginBloc ??= LoginScreenBloc(
-      repository: LoginScreenRepository(
-        apiService: LoginScreenApiService(),
-        mapper: const LoginScreenMapper(),
-        firebaseAuthService: FirebaseAuthService(),
-      ),
-    );
-    return _loginBloc!;
-  }
-
-  static HomeBloc get homeBloc {
-    _homeBloc ??= HomeBloc(
-      repository: HomeRepository(
-        apiService: HomeApiService(),
-        mapper: const HomeMapper(),
-      ),
-    );
-    return _homeBloc!;
-  }
-
   static void registerAll() {
     RouteGenerator.registerFeatureRoutes({
       '/': (_) => const SplashScreenPage(),
@@ -35,51 +11,59 @@ class AppRoutes {
 
       // Login flow
       CcRouteConstants.loginScreen: (_) => BlocProvider.value(
-            value: loginBloc,
+            value: getIt<LoginScreenBloc>(),
             child: const PhoneLoginScreen(),
           ),
       CcRouteConstants.phoneLogin: (_) => BlocProvider.value(
-            value: loginBloc,
+            value: getIt<LoginScreenBloc>(),
             child: const PhoneLoginScreen(),
           ),
       CcRouteConstants.otpVerification: (settings) => BlocProvider.value(
-            value: loginBloc,
+            value: getIt<LoginScreenBloc>(),
             child: OtpVerificationScreen(
               phoneNumber: RouteGenerator.getArgsOr<String>(settings, ''),
             ),
           ),
       CcRouteConstants.completeProfile: (_) => BlocProvider.value(
-            value: loginBloc,
+            value: getIt<LoginScreenBloc>(),
             child: const CompleteProfileScreen(),
           ),
 
       // Home flow
       CcRouteConstants.homeScreen: (_) => BlocProvider.value(
-            value: homeBloc,
-            child: HomeScreen(medicines: MockData.medicines),
+            value: getIt<HomeBloc>(),
+            child: const HomeScreen(),
           ),
       CcRouteConstants.uploadPrescription: (_) => BlocProvider.value(
-            value: homeBloc,
+            value: getIt<HomeBloc>(),
             child: const UploadPrescriptionScreen(),
           ),
-      CcRouteConstants.reviewImages: (_) => BlocProvider.value(
-            value: homeBloc,
-            child: const ReviewImagesScreen(),
-          ),
+      CcRouteConstants.reviewImages: (settings) {
+        final args = settings.arguments;
+        final imagePaths = args is List
+            ? args.map((e) => e.toString()).toList()
+            : <String>[];
+        return BlocProvider.value(
+          value: getIt<HomeBloc>(),
+          child: ReviewImagesScreen(imagePaths: imagePaths),
+        );
+      },
       CcRouteConstants.aiProcessing: (_) => BlocProvider.value(
-            value: homeBloc,
+            value: getIt<HomeBloc>(),
             child: const AiProcessingScreen(),
           ),
-      CcRouteConstants.extractedMedicines: (_) => BlocProvider.value(
-            value: homeBloc,
-            child: const ExtractedMedicinesScreen(),
+      CcRouteConstants.extractedMedicines: (settings) => BlocProvider.value(
+            value: getIt<HomeBloc>(),
+            child: ExtractedMedicinesScreen(
+              prescriptionId: RouteGenerator.getArgs<String>(settings),
+            ),
           ),
       CcRouteConstants.addMedicine: (settings) => AddMedicineScreen(
             medicine: RouteGenerator.getArgs<Medicine>(settings),
             isEditing: RouteGenerator.getArgs<Medicine>(settings) != null,
           ),
       CcRouteConstants.reminderSchedule: (settings) => BlocProvider.value(
-            value: homeBloc,
+            value: getIt<HomeBloc>(),
             child: ReminderScheduleScreen(
               medicines: RouteGenerator.getArgsOr<List<Medicine>>(settings, []),
             ),
@@ -90,7 +74,10 @@ class AppRoutes {
       CcRouteConstants.medicineInfo: (settings) => MedicineInfoScreen(
             medicine: RouteGenerator.getArgs<Medicine>(settings)!,
           ),
-      CcRouteConstants.prescriptionHistory: (_) => const PrescriptionHistoryScreen(),
+      CcRouteConstants.prescriptionHistory: (_) => BlocProvider.value(
+            value: getIt<HomeBloc>(),
+            child: const PrescriptionHistoryScreen(),
+          ),
       CcRouteConstants.prescriptionDetail: (settings) {
         final args = RouteGenerator.getArgs<Map<String, dynamic>>(settings) ?? {};
         return PrescriptionDetailScreen(

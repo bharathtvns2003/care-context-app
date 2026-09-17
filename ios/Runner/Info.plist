@@ -45,6 +45,10 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Care Context needs camera access to photograph your prescriptions.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Care Context needs photo library access to upload prescription images.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

@@ -20,7 +20,7 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<LoginScreenBloc>().add(LoginScreenLoadEvent());
+    getIt<LoginScreenBloc>().add(LoginScreenLoadEvent());
     _phoneFocusNode.addListener(() {
       setState(() {
         _isFocused = _phoneFocusNode.hasFocus;

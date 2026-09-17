@@ -1,12 +1,15 @@
+import 'dart:async';
 import 'package:core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../home.dart';
 import '../../theme/app_colors.dart';
-import '../../core/api_service/contract/home_mock_contract.dart';
 import 'add_medicine_screen.dart';
 
 class ExtractedMedicinesScreen extends StatefulWidget {
-  const ExtractedMedicinesScreen({super.key});
+  final String? prescriptionId;
+
+  const ExtractedMedicinesScreen({super.key, this.prescriptionId});
 
   @override
   State<ExtractedMedicinesScreen> createState() =>
@@ -14,42 +17,93 @@ class ExtractedMedicinesScreen extends StatefulWidget {
 }
 
 class _ExtractedMedicinesScreenState extends State<ExtractedMedicinesScreen> {
-  late List<Medicine> _medicines;
-  final Map<String, dynamic> _response =
-      HomeMockContract.aiExtractionMockResponse;
+  List<Medicine> _medicines = [];
+  bool _isLoading = true;
+  final Map<String, dynamic> _uiConfig =
+      RemoteConfigService.instance.getJson('extraction_ui_config');
 
   Map<String, dynamic> get _headerSchema =>
-      _response['header'] as Map<String, dynamic>;
+      _uiConfig['header'] as Map<String, dynamic>;
   Map<String, dynamic> get _cardSchema =>
-      _response['medicineCard'] as Map<String, dynamic>;
+      _uiConfig['medicineCard'] as Map<String, dynamic>;
   Map<String, dynamic> get _cardLabels =>
       _cardSchema['labels'] as Map<String, dynamic>;
   Map<String, dynamic> get _warningSchema =>
       _cardSchema['warning'] as Map<String, dynamic>;
   Map<String, dynamic> get _deleteDialogSchema =>
-      _response['deleteDialog'] as Map<String, dynamic>;
+      _uiConfig['deleteDialog'] as Map<String, dynamic>;
   Map<String, dynamic> get _addButtonSchema =>
-      _response['addButton'] as Map<String, dynamic>;
+      _uiConfig['addButton'] as Map<String, dynamic>;
   Map<String, dynamic> get _confirmButtonSchema =>
-      _response['confirmButton'] as Map<String, dynamic>;
+      _uiConfig['confirmButton'] as Map<String, dynamic>;
+  Map<String, dynamic> get _emptyStateSchema =>
+      (_uiConfig['emptyState'] as Map<String, dynamic>?) ??
+      const {'message': 'No medicines found'};
+
+  String? _prescriptionId;
+  Timer? _pollTimer;
+  DateTime? _pollStartedAt;
+  static const Duration _pollInterval = Duration(seconds: 5);
+  static const Duration _pollTimeout = Duration(minutes: 2);
 
   @override
   void initState() {
     super.initState();
-    final mockMedicines = _response['medicines'] as List<dynamic>;
-    _medicines = mockMedicines.map((m) {
-      final map = m as Map<String, dynamic>;
-      return Medicine(
-        name: map['name'] as String,
-        dosage: map['dosage'] as String,
-        frequency: map['frequency'] as String,
-        duration: map['duration'] as String,
-        reminderTimes: List<String>.from(map['reminderTimes'] as List),
-        hasWarning: map['hasWarning'] as bool? ?? false,
-        warningDetail: map['warningDetail'] as String?,
-      );
-    }).toList();
+    _prescriptionId = widget.prescriptionId;
+    if (_prescriptionId == null || _prescriptionId!.isEmpty) {
+      final state = getIt<HomeBloc>().state;
+      if (state is PrescriptionUploadedState) {
+        _prescriptionId = state.prescriptionId;
+      }
+    }
+
+    // Prefer medicines already fetched on the AI processing screen.
+    final current = getIt<HomeBloc>().state;
+    if (current is MedicinesLoadedState) {
+      _medicines = current.medicines.map(_fromEntity).toList();
+      _isLoading = false;
+      return;
+    }
+
+    if (_prescriptionId != null && _prescriptionId!.isNotEmpty) {
+      _pollStartedAt = DateTime.now();
+      _fetchMedicines();
+    } else {
+      setState(() => _isLoading = false);
+    }
   }
+
+  void _fetchMedicines() {
+    getIt<HomeBloc>().add(GetMedicinesEvent(prescriptionId: _prescriptionId!));
+  }
+
+  void _startPolling() {
+    _pollTimer?.cancel();
+    _pollTimer = Timer(_pollInterval, () {
+      if (mounted && _prescriptionId != null) {
+        _fetchMedicines();
+      }
+    });
+  }
+
+  bool get _hasPollTimedOut {
+    if (_pollStartedAt == null) return true;
+    return DateTime.now().difference(_pollStartedAt!) >= _pollTimeout;
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
+  Medicine _fromEntity(MedicineEntity e) => Medicine(
+    name: e.name,
+    dosage: e.dosage,
+    frequency: e.frequency,
+    duration: e.duration,
+    reminderTimes: e.reminderTimes,
+  );
 
   void _editMedicine(int index) async {
     final result = await CcRouteHelper.push(
@@ -120,13 +174,50 @@ class _ExtractedMedicinesScreenState extends State<ExtractedMedicinesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.white,
-      body: Column(
-        children: [
-          _buildHeader(context),
-          Expanded(child: _buildBody()),
-        ],
+    return BlocListener<HomeBloc, HomeState>(
+      listener: (context, state) {
+        if (state is MedicinesLoadedState) {
+          if (state.medicines.isEmpty) {
+            if (_hasPollTimedOut) {
+              _pollTimer?.cancel();
+              setState(() {
+                _medicines = [];
+                _isLoading = false;
+              });
+            } else {
+              _startPolling();
+            }
+          } else {
+            _pollTimer?.cancel();
+            setState(() {
+              _medicines = state.medicines.map(_fromEntity).toList();
+              _isLoading = false;
+            });
+          }
+        } else if (state is HomeErrorState) {
+          _pollTimer?.cancel();
+          setState(() => _isLoading = false);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.white,
+        body: _isLoading
+            ? const Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text('Waiting for AI to extract medicines...'),
+                  ],
+                ),
+              )
+            : Column(
+                children: [
+                  _buildHeader(context),
+                  Expanded(child: _buildBody()),
+                ],
+              ),
       ),
     );
   }
@@ -227,6 +318,7 @@ class _ExtractedMedicinesScreenState extends State<ExtractedMedicinesScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            if (_medicines.isEmpty) _buildEmptyState(),
             ...List.generate(_medicines.length, (index) {
               final medicine = _medicines[index];
               return Column(
@@ -247,9 +339,45 @@ class _ExtractedMedicinesScreenState extends State<ExtractedMedicinesScreen> {
             }),
             _buildAddMedicineButton(),
             const SizedBox(height: 10),
-            _buildConfirmButton(),
+            if (_medicines.isNotEmpty) _buildConfirmButton(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 48),
+      child: Column(
+        children: [
+          Icon(
+            Icons.medication_outlined,
+            size: 48,
+            color: const Color(0xFF7A96A4).withValues(alpha: 0.6),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _emptyStateSchema['message'] as String,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.sora(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF1A2B35),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'You can add medicines manually below.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.dmSans(
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
+              color: const Color(0xFF7A96A4),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
       ),
     );
   }

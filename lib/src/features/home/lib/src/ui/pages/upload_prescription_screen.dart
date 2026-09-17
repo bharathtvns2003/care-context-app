@@ -1,10 +1,107 @@
 import 'package:core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../theme/app_colors.dart';
 
 class UploadPrescriptionScreen extends StatelessWidget {
   const UploadPrescriptionScreen({super.key});
+
+  static Future<void> pickAndReview(
+    BuildContext context,
+    ImageSource source,
+  ) async {
+    final picker = ImagePicker();
+    final List<String> paths = [];
+
+    if (source == ImageSource.gallery) {
+      final images = await picker.pickMultiImage(imageQuality: 85);
+      paths.addAll(images.map((e) => e.path));
+    } else {
+      final image = await picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 85,
+      );
+      if (image != null) paths.add(image.path);
+    }
+
+    if (!context.mounted || paths.isEmpty) return;
+
+    CcRouteHelper.push(
+      CcRouteConstants.reviewImages,
+      args: paths,
+    );
+  }
+
+  static void showPickOptions(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE4EEF2),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Upload Prescription',
+                  style: GoogleFonts.sora(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1A2B35),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ListTile(
+                  leading: const Icon(Icons.photo_library_outlined,
+                      color: AppColors.primaryTeal),
+                  title: Text(
+                    'Choose from Gallery',
+                    style: GoogleFonts.dmSans(
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF1A2B35),
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    pickAndReview(context, ImageSource.gallery);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.camera_alt_outlined,
+                      color: AppColors.primaryTeal),
+                  title: Text(
+                    'Take Photo',
+                    style: GoogleFonts.dmSans(
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF1A2B35),
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    pickAndReview(context, ImageSource.camera);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -160,9 +257,7 @@ class UploadPrescriptionScreen extends StatelessWidget {
         ],
       ),
       child: ElevatedButton(
-        onPressed: () {
-          CcRouteHelper.push(CcRouteConstants.reviewImages);
-        },
+        onPressed: () => showPickOptions(context),
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,

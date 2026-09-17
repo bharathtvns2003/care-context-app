@@ -1,4 +1,4 @@
-package com.example.care_context_app
+package care_context.app.android
 
 import io.flutter.embedding.android.FlutterActivity
 

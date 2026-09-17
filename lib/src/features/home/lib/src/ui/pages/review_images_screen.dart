@@ -1,10 +1,16 @@
+import 'dart:io';
+
 import 'package:core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../../home.dart';
 import '../../theme/app_colors.dart';
 
 class ReviewImagesScreen extends StatefulWidget {
-  const ReviewImagesScreen({super.key});
+  final List<String>? imagePaths;
+
+  const ReviewImagesScreen({super.key, this.imagePaths});
 
   @override
   State<ReviewImagesScreen> createState() => _ReviewImagesScreenState();
@@ -12,37 +18,48 @@ class ReviewImagesScreen extends StatefulWidget {
 
 class _ReviewImagesScreenState extends State<ReviewImagesScreen> {
   int _currentPage = 0;
-  final int _totalPages = 3;
+  late List<String> _imagePaths;
   String _selectedDocumentType = 'My Prescriptions';
   final List<String> _documentTypes = [
     'My Prescriptions',
     'Lab Reports',
     'Vaccination Records',
   ];
+  final ImagePicker _picker = ImagePicker();
 
+  @override
+  void initState() {
+    super.initState();
+    _imagePaths = List<String>.from(widget.imagePaths ?? const []);
+    if (_imagePaths.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) CcRouteHelper.pop();
+      });
+    }
+  }
+
+  int get _totalPages => _imagePaths.length;
   bool get _hasPreviousPage => _currentPage > 0;
   bool get _hasNextPage => _currentPage < _totalPages - 1;
 
+  String get _currentFileName {
+    if (_imagePaths.isEmpty) return '';
+    return _imagePaths[_currentPage].split(Platform.pathSeparator).last;
+  }
+
   void _goToPreviousPage() {
     if (!_hasPreviousPage) return;
-
-    setState(() {
-      _currentPage--;
-    });
+    setState(() => _currentPage--);
   }
 
   void _goToNextPage() {
     if (!_hasNextPage) return;
-
-    setState(() {
-      _currentPage++;
-    });
+    setState(() => _currentPage++);
   }
 
   void _handlePreviewSwipe(DragEndDetails details) {
     final velocity = details.primaryVelocity;
     if (velocity == null) return;
-
     if (velocity < -200) {
       _goToNextPage();
     } else if (velocity > 200) {
@@ -50,8 +67,38 @@ class _ReviewImagesScreenState extends State<ReviewImagesScreen> {
     }
   }
 
+  Future<void> _addMoreImages() async {
+    final images = await _picker.pickMultiImage(imageQuality: 85);
+    if (images.isEmpty) return;
+    setState(() {
+      _imagePaths.addAll(images.map((e) => e.path));
+      _currentPage = _imagePaths.length - 1;
+    });
+  }
+
+  void _removeCurrentImage() {
+    if (_imagePaths.isEmpty) return;
+    setState(() {
+      _imagePaths.removeAt(_currentPage);
+      if (_imagePaths.isEmpty) {
+        CcRouteHelper.pop();
+        return;
+      }
+      if (_currentPage >= _imagePaths.length) {
+        _currentPage = _imagePaths.length - 1;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_imagePaths.isEmpty) {
+      return const Scaffold(
+        backgroundColor: AppColors.white,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.white,
       body: Column(
@@ -112,7 +159,7 @@ class _ReviewImagesScreenState extends State<ReviewImagesScreen> {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        '$_totalPages photos selected',
+                        '$_totalPages photo${_totalPages == 1 ? '' : 's'} selected',
                         style: GoogleFonts.dmSans(
                           fontSize: 12,
                           fontWeight: FontWeight.w400,
@@ -239,9 +286,7 @@ class _ReviewImagesScreenState extends State<ReviewImagesScreen> {
             }).toList(),
             onChanged: (value) {
               if (value != null) {
-                setState(() {
-                  _selectedDocumentType = value;
-                });
+                setState(() => _selectedDocumentType = value);
               }
             },
           ),
@@ -257,62 +302,37 @@ class _ReviewImagesScreenState extends State<ReviewImagesScreen> {
         children: [
           Container(
             width: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment(-0.5, -0.5),
-                end: Alignment(0.5, 0.5),
-                colors: [Color(0xFFE8EEF4), Color(0xFFDDE6ED)],
-              ),
+            margin: const EdgeInsets.symmetric(horizontal: 18),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8EEF4),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Center(
-              child: Container(
-                width: 235,
-                margin: const EdgeInsets.symmetric(vertical: 18),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF0D1F2D).withValues(alpha: 0.14),
-                      blurRadius: 14,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildPrescriptionHeader(),
-                      const SizedBox(height: 14),
-                      _buildPageInfo(),
-                      const SizedBox(height: 14),
-                      _buildMedicineRow('Paracetamol', '500mg · BD'),
-                      const SizedBox(height: 14),
-                      _buildMedicineRow('Amoxicillin', '250mg · TDS'),
-                      const SizedBox(height: 14),
-                      _buildMedicineRow('Vitamin D', '1000IU · OD'),
-                      const SizedBox(height: 16),
-                      _buildDateInfo(),
-                    ],
-                  ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.file(
+                File(_imagePaths[_currentPage]),
+                fit: BoxFit.contain,
+                errorBuilder: (_, _, _) => const Center(
+                  child: Icon(Icons.broken_image_outlined,
+                      size: 48, color: Color(0xFF7A96A4)),
                 ),
               ),
             ),
           ),
           Positioned(
-            right: 12,
+            right: 30,
             top: 12,
-            child: Container(
-              width: 31,
-              height: 31,
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.35),
-                borderRadius: BorderRadius.circular(15),
+            child: GestureDetector(
+              onTap: _removeCurrentImage,
+              child: Container(
+                width: 31,
+                height: 31,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.35),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: const Icon(Icons.close, color: AppColors.white, size: 13),
               ),
-              child: const Icon(Icons.close, color: AppColors.white, size: 13),
             ),
           ),
           Positioned(
@@ -384,109 +404,6 @@ class _ReviewImagesScreenState extends State<ReviewImagesScreen> {
     );
   }
 
-  Widget _buildPrescriptionHeader() {
-    return Container(
-      padding: const EdgeInsets.only(bottom: 10),
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFE4EEF2), width: 0.7),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'DR. S. MEHTA',
-                style: GoogleFonts.dmSans(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primaryTeal,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              Text(
-                'MBBS, MD · Reg. 12345',
-                style: GoogleFonts.dmSans(
-                  fontSize: 8,
-                  fontWeight: FontWeight.w400,
-                  color: const Color(0xFF7A96A4),
-                ),
-              ),
-            ],
-          ),
-          Container(
-            width: 23,
-            height: 23,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE6FAF9),
-              borderRadius: BorderRadius.circular(7),
-            ),
-            child: const Icon(
-              Icons.add,
-              color: AppColors.primaryTeal,
-              size: 11,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPageInfo() {
-    return Text(
-      'Page ${_currentPage + 1} of $_totalPages',
-      style: GoogleFonts.dmSans(
-        fontSize: 8,
-        fontWeight: FontWeight.w400,
-        color: const Color(0xFF7A96A4),
-      ),
-    );
-  }
-
-  Widget _buildMedicineRow(String name, String dosage) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          name,
-          style: GoogleFonts.dmSans(
-            fontSize: 8,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF1A2B35),
-          ),
-        ),
-        Text(
-          dosage,
-          style: GoogleFonts.dmSans(
-            fontSize: 8,
-            fontWeight: FontWeight.w400,
-            color: const Color(0xFF7A96A4),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDateInfo() {
-    return Container(
-      padding: const EdgeInsets.only(top: 8),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFFE4EEF2), width: 0.7)),
-      ),
-      child: Text(
-        'Date: 11 Jun 2026',
-        style: GoogleFonts.dmSans(
-          fontSize: 8,
-          fontWeight: FontWeight.w400,
-          color: const Color(0xFF7A96A4),
-        ),
-      ),
-    );
-  }
-
   Widget _buildPageIndicators() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -511,35 +428,28 @@ class _ReviewImagesScreenState extends State<ReviewImagesScreen> {
   }
 
   Widget _buildThumbnails() {
-    return Container(
+    return SizedBox(
       height: 108,
-      padding: const EdgeInsets.fromLTRB(18, 31, 18, 0),
-      child: Row(
-        children: [
-          _buildThumbnail(0, 'Page 1', isSelected: _currentPage == 0),
-          const SizedBox(width: 10),
-          _buildThumbnail(1, 'Page 2', isSelected: _currentPage == 1),
-          const SizedBox(width: 10),
-          _buildThumbnail(2, 'Page 3', isSelected: _currentPage == 2),
-          const SizedBox(width: 10),
-          _buildAddThumbnail(),
-        ],
+      child: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
+        scrollDirection: Axis.horizontal,
+        itemCount: _totalPages + 1,
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
+        itemBuilder: (context, index) {
+          if (index == _totalPages) return _buildAddThumbnail();
+          return _buildThumbnail(index, isSelected: _currentPage == index);
+        },
       ),
     );
   }
 
-  Widget _buildThumbnail(int index, String label, {bool isSelected = false}) {
+  Widget _buildThumbnail(int index, {bool isSelected = false}) {
     return GestureDetector(
       onTap: () => setState(() => _currentPage = index),
       child: Container(
         width: 66,
         height: 82,
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment(-0.5, -0.5),
-            end: Alignment(0.5, 0.5),
-            colors: [Color(0xFFE8EEF4), Color(0xFFDDE6ED)],
-          ),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
@@ -548,61 +458,53 @@ class _ReviewImagesScreenState extends State<ReviewImagesScreen> {
             width: 2,
           ),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.description_outlined,
-              size: 18,
-              color: isSelected
-                  ? AppColors.primaryTeal
-                  : const Color(0xFF7A96A4),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Image.file(
+            File(_imagePaths[index]),
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => const ColoredBox(
+              color: Color(0xFFE8EEF4),
+              child: Icon(Icons.broken_image_outlined,
+                  size: 18, color: Color(0xFF7A96A4)),
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: GoogleFonts.dmSans(
-                fontSize: 9,
-                fontWeight: FontWeight.w600,
-                color: isSelected
-                    ? AppColors.primaryTeal
-                    : const Color(0xFF7A96A4),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildAddThumbnail() {
-    return Container(
-      width: 66,
-      height: 82,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.accentTealDark,
-          width: 2,
-          strokeAlign: BorderSide.strokeAlignInside,
+    return GestureDetector(
+      onTap: _addMoreImages,
+      child: Container(
+        width: 66,
+        height: 82,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.accentTealDark,
+            width: 2,
+            strokeAlign: BorderSide.strokeAlignInside,
+          ),
         ),
-      ),
-      child: CustomPaint(
-        painter: DashedBorderPainter(),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.add, size: 20, color: AppColors.accentTealDark),
-            const SizedBox(height: 4),
-            Text(
-              'Add',
-              style: GoogleFonts.dmSans(
-                fontSize: 9,
-                fontWeight: FontWeight.w600,
-                color: AppColors.accentTealDark,
+        child: CustomPaint(
+          painter: DashedBorderPainter(),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.add, size: 20, color: AppColors.accentTealDark),
+              const SizedBox(height: 4),
+              Text(
+                'Add',
+                style: GoogleFonts.dmSans(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.accentTealDark,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -614,7 +516,7 @@ class _ReviewImagesScreenState extends State<ReviewImagesScreen> {
       child: Align(
         alignment: Alignment.centerLeft,
         child: Text(
-          'prescription_p1.jpg · 2.4 MB',
+          _currentFileName,
           style: GoogleFonts.dmSans(
             fontSize: 12,
             fontWeight: FontWeight.w400,
@@ -648,6 +550,9 @@ class _ReviewImagesScreenState extends State<ReviewImagesScreen> {
         ),
         child: ElevatedButton(
           onPressed: () {
+            getIt<HomeBloc>().add(
+              UploadPrescriptionEvent(imagePaths: _imagePaths),
+            );
             CcRouteHelper.push(CcRouteConstants.aiProcessing);
           },
           style: ElevatedButton.styleFrom(

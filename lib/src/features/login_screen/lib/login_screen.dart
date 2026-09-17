@@ -1,4 +1,5 @@
 export 'src/bloc/login_screen_bloc.dart';
+export 'src/core/dependency_injectior/login_screen_injector.dart';
 export 'src/core/api_service/firebase_auth_service.dart';
 export 'src/core/api_service/login_screen_api_service.dart';
 export 'src/core/api_service/contract/login_screen_contract.dart';

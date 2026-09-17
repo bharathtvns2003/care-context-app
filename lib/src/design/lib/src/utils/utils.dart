@@ -1,5 +1,6 @@
-import 'package:design/design.dart';
 import 'package:flutter/material.dart';
+
+import '../ui/styles/cc_text_styles.dart';
 
 String removeAllHtmlTags(String htmlText) {
   final exp = RegExp(r"<[^>]*>", multiLine: true);

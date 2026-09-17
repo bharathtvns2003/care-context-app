@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "PLACEHOLDER_PROJECT_NUMBER",
-    "project_id": "PLACEHOLDER_PROJECT_ID",
-    "storage_bucket": "PLACEHOLDER_PROJECT_ID.appspot.com"
+    "project_number": "932475463665",
+    "project_id": "care-context",
+    "storage_bucket": "care-context.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "PLACEHOLDER_MOBILE_SDK_APP_ID",
+        "mobilesdk_app_id": "1:932475463665:android:0d3111a024392d2a028650",
         "android_client_info": {
-          "package_name": "com.example.care_context_app"
+          "package_name": "care_context.app.android"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "PLACEHOLDER_API_KEY"
+          "current_key": "AIzaSyDQjE2uO28oahg84X3BKWcQekgF_QuGQFs"
         }
       ],
       "services": {

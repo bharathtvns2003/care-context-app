@@ -4,48 +4,90 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../home.dart';
 import '../../theme/app_colors.dart';
 
-class MockData {
-  static final List<Medicine> medicines = _buildMedicines();
-
-  static List<Medicine> _buildMedicines() {
-    final mockMedicines = HomeMockContract.homeDataMockResponse['medicines'] as List<dynamic>;
-    return mockMedicines.map((m) {
-      final map = m as Map<String, dynamic>;
-      return Medicine(
-        name: map['name'] as String,
-        dosage: map['dosage'] as String,
-        frequency: map['frequency'] as String,
-        duration: map['duration'] as String,
-        reminderTimes: List<String>.from(map['reminderTimes'] as List),
-      );
-    }).toList();
-  }
-}
-
 class HomeScreen extends StatefulWidget {
-  final List<Medicine> medicines;
-
-  const HomeScreen({super.key, required this.medicines});
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late List<MedicineReminder> _reminders;
+  List<Medicine> _medicines = [];
+  List<MedicineReminder> _reminders = [];
+  List<PrescriptionEntity> _prescriptions = [];
 
   @override
   void initState() {
     super.initState();
-    context.read<HomeBloc>().add(LoadHomeDataEvent());
+    _reloadHomeData();
+  }
+
+  void _reloadHomeData() {
+    getIt<HomeBloc>().add(LoadHomeDataEvent());
+  }
+
+  void _ensureHomeDataLoaded(HomeState state) {
+    if (_hasPrescriptions) return;
+    if (state is HomeLoadingState ||
+        state is HomeLoadedState ||
+        state is HomeErrorState) {
+      return;
+    }
+    // Returning via back with a transient bloc state (e.g. MedicinesLoaded).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _hasPrescriptions) return;
+      final current = getIt<HomeBloc>().state;
+      if (current is HomeLoadingState || current is HomeLoadedState) return;
+      _reloadHomeData();
+    });
+  }
+
+  void _updateFromHomeData(HomeEntity homeData) {
+    _prescriptions = homeData.prescriptions;
+    _medicines = homeData.medicines.map((e) => Medicine(
+      name: e.name,
+      dosage: e.dosage,
+      frequency: e.frequency,
+      duration: e.duration,
+      reminderTimes: e.reminderTimes,
+    )).toList();
+    _reminders = _generateReminders();
+
+    if (_medicines.isEmpty && _prescriptions.isNotEmpty) {
+      for (final p in _prescriptions) {
+        getIt<HomeBloc>().add(GetMedicinesEvent(prescriptionId: p.id));
+      }
+    }
+  }
+
+  void _updateMedicines(List<MedicineEntity> entities) {
+    final newMeds = entities.map((e) => Medicine(
+      name: e.name,
+      dosage: e.dosage,
+      frequency: e.frequency,
+      duration: e.duration,
+      reminderTimes: e.reminderTimes,
+    )).toList();
+
+    if (_prescriptions.length <= 1) {
+      _medicines = newMeds;
+    } else {
+      final existingNames = _medicines.map((m) => m.name).toSet();
+      for (final medicine in newMeds) {
+        if (!existingNames.contains(medicine.name)) {
+          _medicines.add(medicine);
+          existingNames.add(medicine.name);
+        }
+      }
+    }
     _reminders = _generateReminders();
   }
 
-  bool get _hasPrescriptions => widget.medicines.isNotEmpty;
+  bool get _hasPrescriptions => _prescriptions.isNotEmpty || _medicines.isNotEmpty;
 
   List<MedicineReminder> _generateReminders() {
     final List<MedicineReminder> reminders = [];
-    for (final medicine in widget.medicines) {
+    for (final medicine in _medicines) {
       for (final time in medicine.reminderTimes) {
         reminders.add(
           MedicineReminder(
@@ -83,17 +125,69 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_hasPrescriptions) {
-      return const UploadPrescriptionScreen();
-    }
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7FBFC),
-      body: Column(
-        children: [
-          _buildHeader(),
-          Expanded(child: _buildBody()),
-        ],
-      ),
+    return BlocConsumer<HomeBloc, HomeState>(
+      listener: (context, state) {
+        if (state is HomeLoadedState) {
+          setState(() {
+            _updateFromHomeData(state.homeData);
+          });
+        } else if (state is MedicinesLoadedState) {
+          setState(() {
+            _updateMedicines(state.medicines);
+          });
+        }
+      },
+      builder: (context, state) {
+        _ensureHomeDataLoaded(state);
+
+        // Keep showing home content during secondary loads (e.g. get medicines).
+        if (!_hasPrescriptions) {
+          if (state is HomeErrorState) {
+            return Scaffold(
+              backgroundColor: const Color(0xFFF7FBFC),
+              body: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(state.message),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _reloadHomeData,
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          // Initial app load — show spinner until first home response.
+          if (state is HomeLoadingState || state is HomeInitialState) {
+            return const Scaffold(
+              backgroundColor: Color(0xFFF7FBFC),
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          // Only show empty upload UI after a successful home load with no data.
+          if (state is HomeLoadedState) {
+            return const UploadPrescriptionScreen();
+          }
+
+          // Transient states (upload/medicines) — keep empty upload UI, not a second loader.
+          return const UploadPrescriptionScreen();
+        }
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFF7FBFC),
+          body: Column(
+            children: [
+              _buildHeader(),
+              Expanded(child: _buildBody()),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -218,7 +312,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onTap: () {
               CcRouteHelper.push(
                 CcRouteConstants.todaysSchedule,
-                args: widget.medicines,
+                args: _medicines,
               );
             },
             child: Container(
@@ -249,15 +343,11 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           _buildAbhaIdCard(),
           const SizedBox(height: 16),
-          _buildMyBookingsCard(),
-          const SizedBox(height: 16),
           _buildUploadPrescriptionCard(),
           const SizedBox(height: 16),
           _buildTodaysMedicinesList(),
           const SizedBox(height: 16),
           _buildQuickActionsRow(),
-          const SizedBox(height: 16),
-          _buildInsuranceCard(),
         ],
       ),
     );
@@ -537,9 +627,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildUploadPrescriptionCard() {
     return GestureDetector(
-      onTap: () {
-        CcRouteHelper.push(CcRouteConstants.uploadPrescription);
-      },
+      onTap: () => UploadPrescriptionScreen.showPickOptions(context),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(17),
@@ -776,7 +864,13 @@ class _HomeScreenState extends State<HomeScreen> {
             title: 'Edit',
             subtitle: 'Edit Medicines',
             onTap: () {
-              CcRouteHelper.push(CcRouteConstants.extractedMedicines);
+              final prescriptionId = _prescriptions.isNotEmpty
+                  ? _prescriptions.first.id
+                  : null;
+              CcRouteHelper.push(
+                CcRouteConstants.extractedMedicines,
+                args: prescriptionId,
+              );
             },
           ),
         ),

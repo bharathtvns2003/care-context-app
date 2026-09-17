@@ -77,7 +77,9 @@ class LoginScreenBloc extends Bloc<LoginScreenEvent, LoginScreenState> {
       if (token.isNotEmpty) {
         await repository.saveAuthToken(token);
       }
-      emit(OtpVerifiedState(token: token));
+      final isNewUser =
+          userCredential.additionalUserInfo?.isNewUser ?? true;
+      emit(OtpVerifiedState(token: token, isNewUser: isNewUser));
     } catch (e) {
       String message = 'Verification failed';
       if (e is FirebaseAuthException) {
@@ -104,7 +106,9 @@ class LoginScreenBloc extends Bloc<LoginScreenEvent, LoginScreenState> {
       if (token.isNotEmpty) {
         await repository.saveAuthToken(token);
       }
-      emit(OtpVerifiedState(token: token));
+      final isNewUser =
+          userCredential.additionalUserInfo?.isNewUser ?? true;
+      emit(OtpVerifiedState(token: token, isNewUser: isNewUser));
     } catch (e) {
       emit(LoginScreenErrorState(message: 'Auto-verification failed'));
     }

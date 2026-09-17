@@ -3,6 +3,32 @@ import 'package:core/core.dart';
 class HomeApiService {
   Future<ApiService> get _api => ApiService.authenticated();
 
+  Map<String, dynamic> _unwrap(dynamic data) {
+    final map = data as Map<String, dynamic>;
+    if (map.containsKey('data') && map['data'] is Map<String, dynamic>) {
+      return map['data'] as Map<String, dynamic>;
+    }
+    return map;
+  }
+
+  List<dynamic> _unwrapList(dynamic data) {
+    if (data is List<dynamic>) return data;
+    final map = data as Map<String, dynamic>;
+    if (map.containsKey('data') && map['data'] is List<dynamic>) {
+      return map['data'] as List<dynamic>;
+    }
+    if (map.containsKey('data') && map['data'] is Map<String, dynamic>) {
+      final inner = map['data'] as Map<String, dynamic>;
+      if (inner.containsKey('medicines') && inner['medicines'] is List) {
+        return inner['medicines'] as List<dynamic>;
+      }
+    }
+    if (map.containsKey('medicines') && map['medicines'] is List) {
+      return map['medicines'] as List<dynamic>;
+    }
+    return [];
+  }
+
   Future<Map<String, dynamic>> uploadPrescription(List<String> filePaths) async {
     final api = await _api;
     final response = await api.uploadMultipart(
@@ -10,19 +36,19 @@ class HomeApiService {
       filePaths: filePaths,
       fieldName: 'files',
     );
-    return response.data as Map<String, dynamic>;
+    return _unwrap(response.data);
   }
 
   Future<Map<String, dynamic>> getPrescriptionInfo(String prescriptionId) async {
     final api = await _api;
     final response = await api.get(ApiConstants.prescriptionById(prescriptionId));
-    return response.data as Map<String, dynamic>;
+    return _unwrap(response.data);
   }
 
   Future<List<dynamic>> getMedicines(String prescriptionId) async {
     final api = await _api;
     final response = await api.get(ApiConstants.prescriptionMedicines(prescriptionId));
-    return response.data as List<dynamic>;
+    return _unwrapList(response.data);
   }
 
   Future<Map<String, dynamic>> addMedicine({
@@ -34,7 +60,7 @@ class HomeApiService {
       ApiConstants.prescriptionMedicines(prescriptionId),
       data: medicineData,
     );
-    return response.data as Map<String, dynamic>;
+    return _unwrap(response.data);
   }
 
   Future<Map<String, dynamic>> updateMedicine({
@@ -47,7 +73,7 @@ class HomeApiService {
       ApiConstants.prescriptionMedicineById(prescriptionId, medicineId),
       data: medicineData,
     );
-    return response.data as Map<String, dynamic>;
+    return _unwrap(response.data);
   }
 
   Future<void> deleteMedicine({
@@ -95,6 +121,6 @@ class HomeApiService {
       ApiConstants.deviceTokens,
       data: data,
     );
-    return response.data as Map<String, dynamic>;
+    return _unwrap(response.data);
   }
 }

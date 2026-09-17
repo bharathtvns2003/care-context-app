@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../home.dart';
 import '../../theme/app_colors.dart';
 
 class AiProcessingScreen extends StatefulWidget {
@@ -23,6 +24,15 @@ class _AiProcessingScreenState extends State<AiProcessingScreen>
     'Reading dosage & frequency',
     'Preparing your reminders...',
   ];
+
+  StreamSubscription<HomeState>? _blocSub;
+  Timer? _pollTimer;
+  String? _prescriptionId;
+  DateTime? _pollStartedAt;
+  bool _navigated = false;
+
+  static const Duration _pollInterval = Duration(seconds: 5);
+  static const Duration _pollTimeout = Duration(minutes: 2);
 
   @override
   void initState() {
@@ -52,16 +62,81 @@ class _AiProcessingScreenState extends State<AiProcessingScreen>
     });
 
     _animationController.forward();
+    _listenForUploadAndExtraction();
 
-    Timer(const Duration(seconds: 8), () {
-      if (mounted) {
-        CcRouteHelper.pushReplacement(CcRouteConstants.extractedMedicines);
+    // Handle case where upload already finished before this screen mounted.
+    final current = getIt<HomeBloc>().state;
+    if (current is PrescriptionUploadedState) {
+      _prescriptionId = current.prescriptionId;
+      _pollStartedAt = DateTime.now();
+      _fetchMedicines();
+    } else if (current is MedicinesLoadedState && current.medicines.isNotEmpty) {
+      _goToExtractedMedicines();
+    }
+  }
+
+  void _listenForUploadAndExtraction() {
+    final bloc = getIt<HomeBloc>();
+    _blocSub = bloc.stream.listen((state) {
+      if (!mounted || _navigated) return;
+
+      if (state is PrescriptionUploadedState) {
+        _prescriptionId = state.prescriptionId;
+        _pollStartedAt = DateTime.now();
+        _fetchMedicines();
+      } else if (state is MedicinesLoadedState) {
+        if (state.medicines.isNotEmpty) {
+          _goToExtractedMedicines();
+        } else if (_hasPollTimedOut) {
+          _goToExtractedMedicines();
+        } else {
+          _scheduleNextPoll();
+        }
+      } else if (state is HomeErrorState) {
+        _pollTimer?.cancel();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Upload failed: ${state.message}')),
+        );
+        CcRouteHelper.pop();
       }
+    });
+  }
+
+  void _fetchMedicines() {
+    if (_prescriptionId == null || _prescriptionId!.isEmpty) return;
+    getIt<HomeBloc>().add(GetMedicinesEvent(prescriptionId: _prescriptionId!));
+  }
+
+  void _scheduleNextPoll() {
+    _pollTimer?.cancel();
+    _pollTimer = Timer(_pollInterval, () {
+      if (mounted && !_navigated) _fetchMedicines();
+    });
+  }
+
+  bool get _hasPollTimedOut {
+    if (_pollStartedAt == null) return false;
+    return DateTime.now().difference(_pollStartedAt!) >= _pollTimeout;
+  }
+
+  void _goToExtractedMedicines() {
+    if (_navigated || !mounted) return;
+    _navigated = true;
+    _pollTimer?.cancel();
+    // Defer navigation so we never push during build/initState.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      CcRouteHelper.pushReplacement(
+        CcRouteConstants.extractedMedicines,
+        args: _prescriptionId,
+      );
     });
   }
 
   @override
   void dispose() {
+    _blocSub?.cancel();
+    _pollTimer?.cancel();
     _animationController.dispose();
     super.dispose();
   }
@@ -236,6 +311,10 @@ class _AiProcessingScreenState extends State<AiProcessingScreen>
     return AnimatedBuilder(
       animation: _progressAnimation,
       builder: (context, child) {
+        // Hold at ~95% while still waiting for extraction results.
+        final visualProgress = _navigated
+            ? 1.0
+            : (_progressAnimation.value * 0.95).clamp(0.0, 0.95);
         return Container(
           width: 297,
           height: 6,
@@ -246,7 +325,7 @@ class _AiProcessingScreenState extends State<AiProcessingScreen>
           child: Align(
             alignment: Alignment.centerLeft,
             child: Container(
-              width: 297 * _progressAnimation.value,
+              width: 297 * visualProgress,
               height: 6,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(

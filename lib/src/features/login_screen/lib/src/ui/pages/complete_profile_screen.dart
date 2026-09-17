@@ -401,7 +401,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
             onPressed: isLoading
                 ? null
                 : () {
-                    context.read<LoginScreenBloc>().add(
+                    getIt<LoginScreenBloc>().add(
                           CompleteProfileEvent(
                             name: _nameController.text,
                             age: _ageController.text,

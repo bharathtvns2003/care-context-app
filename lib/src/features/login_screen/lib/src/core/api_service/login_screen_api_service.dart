@@ -5,7 +5,7 @@ class LoginScreenApiService {
   final ApiService apiService = ApiService();
 
   Future<LoginScreenNetworkModel> getLoginScreensData() async {
-    final rawResponse = LoginScreenMockContract.onboardingMockResponse;
+    final rawResponse = RemoteConfigService.instance.getJson('login_screen_config');
     return apiService.mock(
       method: 'GET',
       url: '/api/login/config',

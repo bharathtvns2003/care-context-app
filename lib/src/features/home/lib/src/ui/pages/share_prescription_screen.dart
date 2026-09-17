@@ -119,12 +119,7 @@ $medicationsList
         children: [
           _buildPrescriptionCard(),
           const SizedBox(height: 14),
-          _buildShareButton(
-            label: '📄 Export as PDF',
-            backgroundColor: const Color(0xFFE4EEF2),
-            textColor: const Color(0xFF3D5566),
-            onTap: _exportAsPdf,
-          ),
+          _buildShareButton(label: 'Export as Text', onTap: _exportAsPdf),
         ],
       ),
     );
@@ -269,7 +264,11 @@ $medicationsList
     );
   }
 
-  Widget _buildMedicationItem(int number, MedicationItem medication, bool isLast) {
+  Widget _buildMedicationItem(
+    int number,
+    MedicationItem medication,
+    bool isLast,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
@@ -332,9 +331,7 @@ $medicationsList
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: const BoxDecoration(
         color: Color(0xFFF7FBFC),
-        border: Border(
-          top: BorderSide(color: Color(0xFFE4EEF2), width: 0.67),
-        ),
+        border: Border(top: BorderSide(color: Color(0xFFE4EEF2), width: 0.67)),
       ),
       child: Center(
         child: Text(
@@ -351,27 +348,41 @@ $medicationsList
 
   Widget _buildShareButton({
     required String label,
-    required Color backgroundColor,
-    required Color textColor,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        height: 51,
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(16),
+    return Container(
+      width: double.infinity,
+      height: 51,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment(-0.8, -0.8),
+          end: Alignment(0.8, 0.8),
+          colors: [AppColors.accentTealDark, AppColors.primaryTeal],
         ),
-        child: Center(
-          child: Text(
-            label,
-            style: GoogleFonts.sora(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: textColor,
-            ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.accentTealDark.withValues(alpha: 0.35),
+            blurRadius: 10,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.sora(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: AppColors.white,
           ),
         ),
       ),

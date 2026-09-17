@@ -104,7 +104,11 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           current is LoginScreenErrorState,
       listener: (context, state) {
         if (state is OtpVerifiedState) {
-          CcRouteHelper.push(CcRouteConstants.completeProfile);
+          if (state.isNewUser) {
+            CcRouteHelper.push(CcRouteConstants.completeProfile);
+          } else {
+            CcRouteHelper.pushAndPopUntil(CcRouteConstants.homeScreen);
+          }
         } else if (state is OtpSentState) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('OTP resent successfully')),
@@ -278,7 +282,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       child: GestureDetector(
         onTap: _resendSeconds <= 0
             ? () {
-                context.read<LoginScreenBloc>().add(
+                getIt<LoginScreenBloc>().add(
                       ResendOtpEvent(phoneNumber: widget.phoneNumber),
                     );
               }
@@ -339,7 +343,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 : () {
                     final otp = _otpValue;
                     if (otp.length == 6) {
-                      context.read<LoginScreenBloc>().add(
+                      getIt<LoginScreenBloc>().add(
                             VerifyOtpEvent(
                               phoneNumber: widget.phoneNumber,
                               otp: otp,

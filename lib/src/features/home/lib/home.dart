@@ -1,4 +1,5 @@
 export 'src/bloc/home_bloc.dart';
+export 'src/di/home_injector.dart';
 export 'src/core/api_service/home_api_service.dart';
 export 'src/core/api_service/contract/home_mock_contract.dart';
 export 'src/core/api_service/models/home_network_model.dart';

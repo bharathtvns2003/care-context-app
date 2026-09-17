@@ -2,7 +2,8 @@ import 'package:core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/app_colors.dart';
-import '../../core/api_service/contract/home_mock_contract.dart';
+// TODO: Revert to use real medicine info API when backend endpoint is available
+// import '../../core/api_service/contract/home_mock_contract.dart';
 import 'add_medicine_screen.dart';
 
 class MedicineInfoScreen extends StatelessWidget {
@@ -10,10 +11,20 @@ class MedicineInfoScreen extends StatelessWidget {
 
   const MedicineInfoScreen({super.key, required this.medicine});
 
+  // TODO: Replace with real API call when backend provides medicine info endpoint
+  // Previously used HomeMockContract.medicineInfoMockResponse
   Map<String, dynamic> _getMedicineInfo() {
-    final allInfo = HomeMockContract.medicineInfoMockResponse;
-    return (allInfo[medicine.name] as Map<String, dynamic>?) ??
-        Map<String, dynamic>.from(HomeMockContract.defaultMedicineInfo);
+    return {
+      "genericName": "As prescribed",
+      "usedFor": ["As prescribed by your doctor"],
+      "warning": {
+        "title": "Follow prescription.",
+        "description":
+            "Always take this medicine exactly as directed by your healthcare provider.",
+      },
+      "sideEffects": ["Consult your doctor for information"],
+      "instructions": ["Take as prescribed by your doctor"],
+    };
   }
 
   @override

@@ -15,8 +15,8 @@ class ApiService {
     _dio = Dio(
       BaseOptions(
         baseUrl: ApiConstants.baseUrl,
-        connectTimeout: const Duration(seconds: 30),
-        receiveTimeout: const Duration(seconds: 30),
+        connectTimeout: const Duration(seconds: 120),
+        receiveTimeout: const Duration(seconds: 120),
         headers: {
           'Content-Type': 'application/json',
           if (token != null) 'Authorization': 'Bearer $token',
@@ -27,8 +27,10 @@ class ApiService {
     _initializeInterceptors();
   }
 
+  // TODO: Replace with real auth flow (Firebase token → backend JWT exchange)
   static Future<ApiService> authenticated() async {
-    final token = await TokenManager.instance.getToken();
+    const token =
+        'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIwNjc3YTZkMy1lNTBjLTRhYjgtOGJlMy1jZjhkYzA5M2IyMWMiLCJpYXQiOjE3ODgxMTMyOTYsImV4cCI6NDc4ODExMzI5NiwianRpIjoiMGMyYTE1YmItZjFhYi00Mjc1LWExMDEtODBhZWRjY2M5MTQ5Iiwicm9sZSI6IlBBVElFTlQiLCJwaG9uZSI6Iis5MTkzOTg3MTI5NTcifQ.Qnth8ukuV0TIhmNN90xQWSeHl8x3K15wsa0a-MOSjZc';
     return ApiService(token: token);
   }
 
@@ -41,6 +43,7 @@ class ApiService {
       InterceptorsWrapper(
         onRequest: (options, handler) {
           developer.log('REQUEST: ${options.method} ${options.uri}');
+          developer.log('AUTH: ${options.headers['Authorization']}');
           handler.next(options);
         },
         onResponse: (response, handler) {

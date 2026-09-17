@@ -1,6 +1,8 @@
-import 'package:design/design.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+import '../../utils/utils.dart';
+import 'cc_colors.dart';
 
 const String soraFontFamily = 'Sora';
 const String dmSansFontFamily = 'DM Sans';

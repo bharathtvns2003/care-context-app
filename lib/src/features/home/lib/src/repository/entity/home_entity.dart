@@ -66,14 +66,24 @@ class PrescriptionEntity {
   final String id;
   final String? status;
   final String? uploadedAt;
+  final String? doctorName;
+  final String? title;
+  final String? date;
+  final int? medicationCount;
   final List<String>? imageUrls;
+  final List<String>? thumbnailUrls;
   final List<MedicineEntity> medicines;
 
   const PrescriptionEntity({
     required this.id,
     this.status,
     this.uploadedAt,
+    this.doctorName,
+    this.title,
+    this.date,
+    this.medicationCount,
     this.imageUrls,
+    this.thumbnailUrls,
     this.medicines = const [],
   });
 

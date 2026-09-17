@@ -1,7 +1,9 @@
 class HomeMockContract {
   const HomeMockContract._();
 
-  static const Map<String, dynamic> homeDataMockResponse = {
+  static const Map<String, dynamic> 
+  
+  homeDataMockResponse = {
     "user": {"name": "Akash", "abhaId": null, "abhaStatus": "not_linked"},
     "medicines": [
       {
@@ -270,6 +272,7 @@ class HomeMockContract {
     },
     "addButton": {"icon": "+", "text": "Add Missing Medicine"},
     "confirmButton": {"text": "Confirm & Set Reminders"},
+    "emptyState": {"message": "No medicines found"},
     "reminderSchedule": {
       "header": {
         "title": "Reminder Schedule",

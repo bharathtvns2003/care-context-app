@@ -18,7 +18,8 @@ class OtpSentState extends LoginScreenState {
 
 class OtpVerifiedState extends LoginScreenState {
   final String token;
-  OtpVerifiedState({required this.token});
+  final bool isNewUser;
+  OtpVerifiedState({required this.token, required this.isNewUser});
 }
 
 class ProfileCompletedState extends LoginScreenState {}

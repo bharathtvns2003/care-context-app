@@ -101,14 +101,24 @@ class PrescriptionNetworkModel {
   final String id;
   final String? status;
   final String? uploadedAt;
+  final String? doctorName;
+  final String? title;
+  final String? date;
+  final int? medicationCount;
   final List<String>? imageUrls;
+  final List<String>? thumbnailUrls;
   final List<MedicineNetworkModel> medicines;
 
   const PrescriptionNetworkModel({
     required this.id,
     this.status,
     this.uploadedAt,
+    this.doctorName,
+    this.title,
+    this.date,
+    this.medicationCount,
     this.imageUrls,
+    this.thumbnailUrls,
     this.medicines = const [],
   });
 
@@ -116,9 +126,16 @@ class PrescriptionNetworkModel {
     return PrescriptionNetworkModel(
       id: json['id'] ?? json['prescriptionId'] ?? '',
       status: json['status'] as String?,
-      uploadedAt: json['uploadedAt'] as String?,
+      uploadedAt: json['uploadedAt'] ?? json['date'] as String?,
+      doctorName: json['doctorName'] as String?,
+      title: json['title'] as String?,
+      date: json['date'] as String?,
+      medicationCount: json['medicationCount'] as int?,
       imageUrls: json['imageUrls'] != null
           ? List<String>.from(json['imageUrls'])
+          : null,
+      thumbnailUrls: json['thumbnailUrls'] != null
+          ? List<String>.from(json['thumbnailUrls'])
           : null,
       medicines: json['medicines'] != null
           ? (json['medicines'] as List<dynamic>)
@@ -143,13 +160,19 @@ class PrescriptionsPageNetworkModel {
   });
 
   factory PrescriptionsPageNetworkModel.fromJson(Map<String, dynamic> json) {
+    final data = json['data'] as Map<String, dynamic>? ?? json;
+    final prescriptions = data['prescriptions'] as List<dynamic>?
+        ?? json['content'] as List<dynamic>?
+        ?? [];
+    final pagination = data['pagination'] as Map<String, dynamic>? ?? {};
+
     return PrescriptionsPageNetworkModel(
-      content: (json['content'] as List<dynamic>? ?? [])
+      content: prescriptions
           .map((e) => PrescriptionNetworkModel.fromJson(e as Map<String, dynamic>))
           .toList(),
-      totalElements: json['totalElements'] ?? 0,
-      totalPages: json['totalPages'] ?? 0,
-      currentPage: json['number'] ?? json['currentPage'] ?? 0,
+      totalElements: pagination['totalRecords'] ?? json['totalElements'] ?? 0,
+      totalPages: pagination['totalPages'] ?? json['totalPages'] ?? 0,
+      currentPage: pagination['currentPage'] ?? json['number'] ?? 0,
     );
   }
 }
