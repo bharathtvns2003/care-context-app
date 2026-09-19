@@ -70,7 +70,10 @@ class _AiProcessingScreenState extends State<AiProcessingScreen>
       _prescriptionId = current.prescriptionId;
       _pollStartedAt = DateTime.now();
       _fetchMedicines();
-    } else if (current is MedicinesLoadedState && current.medicines.isNotEmpty) {
+    } else if (current is MedicinesLoadedState &&
+        _prescriptionId != null &&
+        current.prescriptionId == _prescriptionId &&
+        current.medicines.isNotEmpty) {
       _goToExtractedMedicines();
     }
   }
@@ -85,6 +88,8 @@ class _AiProcessingScreenState extends State<AiProcessingScreen>
         _pollStartedAt = DateTime.now();
         _fetchMedicines();
       } else if (state is MedicinesLoadedState) {
+        // Only react to medicines matching the uploaded prescription
+        if (_prescriptionId == null || state.prescriptionId != _prescriptionId) return;
         if (state.medicines.isNotEmpty) {
           _goToExtractedMedicines();
         } else if (_hasPollTimedOut) {

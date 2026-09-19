@@ -17,8 +17,12 @@ class PrescriptionUploadedState extends HomeState {
 }
 
 class MedicinesLoadedState extends HomeState {
+  final String prescriptionId;
   final List<MedicineEntity> medicines;
-  MedicinesLoadedState({required this.medicines});
+  MedicinesLoadedState({
+    required this.prescriptionId,
+    required this.medicines,
+  });
 }
 
 class MedicineAddedState extends HomeState {

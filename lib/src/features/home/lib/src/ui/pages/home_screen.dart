@@ -69,15 +69,11 @@ class _HomeScreenState extends State<HomeScreen> {
       reminderTimes: e.reminderTimes,
     )).toList();
 
-    if (_prescriptions.length <= 1) {
-      _medicines = newMeds;
-    } else {
-      final existingNames = _medicines.map((m) => m.name).toSet();
-      for (final medicine in newMeds) {
-        if (!existingNames.contains(medicine.name)) {
-          _medicines.add(medicine);
-          existingNames.add(medicine.name);
-        }
+    final existingNames = _medicines.map((m) => m.name).toSet();
+    for (final medicine in newMeds) {
+      if (!existingNames.contains(medicine.name)) {
+        _medicines.add(medicine);
+        existingNames.add(medicine.name);
       }
     }
     _reminders = _generateReminders();
@@ -164,8 +160,12 @@ class _HomeScreenState extends State<HomeScreen> {
           // Initial app load — show spinner until first home response.
           if (state is HomeLoadingState || state is HomeInitialState) {
             return const Scaffold(
-              backgroundColor: Color(0xFFF7FBFC),
-              body: Center(child: CircularProgressIndicator()),
+              backgroundColor: Colors.white,
+              body: Center(
+                child: CircularProgressIndicator(
+                  color: AppColors.primaryTeal,
+                ),
+              ),
             );
           }
 

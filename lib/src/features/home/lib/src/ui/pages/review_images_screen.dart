@@ -95,7 +95,11 @@ class _ReviewImagesScreenState extends State<ReviewImagesScreen> {
     if (_imagePaths.isEmpty) {
       return const Scaffold(
         backgroundColor: AppColors.white,
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: AppColors.primaryTeal,
+          ),
+        ),
       );
     }
 

@@ -119,9 +119,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           _timer?.cancel();
           _startResendTimer();
         } else if (state is LoginScreenErrorState) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message)));
         }
       },
       child: Scaffold(
@@ -186,19 +186,21 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     return Container(
       width: double.infinity,
       color: CcColors.background,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildOtpInput(),
-            const SizedBox(height: 22),
-            _buildResendText(),
-            const SizedBox(height: 22),
-            _buildVerifyButton(),
-            const SizedBox(height: 22),
-            _buildInfoBox(),
-          ],
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildOtpInput(),
+              const SizedBox(height: 22),
+              _buildResendText(),
+              const SizedBox(height: 22),
+              _buildVerifyButton(),
+              const SizedBox(height: 22),
+              _buildInfoBox(),
+            ],
+          ),
         ),
       ),
     );
@@ -233,7 +235,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   child: Container(
                     height: 55,
                     decoration: BoxDecoration(
-                      color: isPast ? CcColors.surfaceSecondary : CcColors.surface,
+                      color: isPast
+                          ? CcColors.surfaceSecondary
+                          : CcColors.surface,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: isCurrent || isPast
@@ -283,8 +287,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         onTap: _resendSeconds <= 0
             ? () {
                 getIt<LoginScreenBloc>().add(
-                      ResendOtpEvent(phoneNumber: widget.phoneNumber),
-                    );
+                  ResendOtpEvent(phoneNumber: widget.phoneNumber),
+                );
               }
             : null,
         child: RichText(
@@ -344,11 +348,11 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     final otp = _otpValue;
                     if (otp.length == 6) {
                       getIt<LoginScreenBloc>().add(
-                            VerifyOtpEvent(
-                              phoneNumber: widget.phoneNumber,
-                              otp: otp,
-                            ),
-                          );
+                        VerifyOtpEvent(
+                          phoneNumber: widget.phoneNumber,
+                          otp: otp,
+                        ),
+                      );
                     }
                   },
             style: ElevatedButton.styleFrom(

@@ -138,7 +138,11 @@ class _PrescriptionHistoryScreenState extends State<PrescriptionHistoryScreen> {
     return BlocBuilder<HomeBloc, HomeState>(
       builder: (context, state) {
         if (state is HomeLoadingState) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(
+            child: CircularProgressIndicator(
+              color: AppColors.primaryTeal,
+            ),
+          );
         }
         if (state is HomeErrorState) {
           return Center(
@@ -313,6 +317,7 @@ class _PrescriptionHistoryScreenState extends State<PrescriptionHistoryScreen> {
             ),
           ),
           const SizedBox(height: 12),
+          // TODO: change the medicine dosage
           Row(
             children: [
               Expanded(

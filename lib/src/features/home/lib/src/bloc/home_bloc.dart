@@ -38,7 +38,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     Emitter<HomeState> emit,
   ) async {
     try {
-      // AI processing screen owns the loading UX — avoid a second HomeLoading spinner.
+      // Clear any previous state when starting a new upload
+      emit(HomeInitialState());
       final prescriptionId = await repository.uploadPrescription(event.imagePaths);
       emit(PrescriptionUploadedState(prescriptionId: prescriptionId));
     } catch (e) {
@@ -51,9 +52,11 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     Emitter<HomeState> emit,
   ) async {
     try {
-      // Keep previous UI while fetching; callers handle empty/loading themselves.
       final medicines = await repository.getMedicines(event.prescriptionId);
-      emit(MedicinesLoadedState(medicines: medicines));
+      emit(MedicinesLoadedState(
+        prescriptionId: event.prescriptionId,
+        medicines: medicines,
+      ));
     } catch (e) {
       emit(HomeErrorState(message: e.toString()));
     }

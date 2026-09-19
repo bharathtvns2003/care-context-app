@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../home.dart';
 import '../../theme/app_colors.dart';
-import 'add_medicine_screen.dart';
 
 class ExtractedMedicinesScreen extends StatefulWidget {
   final String? prescriptionId;
@@ -19,8 +18,9 @@ class ExtractedMedicinesScreen extends StatefulWidget {
 class _ExtractedMedicinesScreenState extends State<ExtractedMedicinesScreen> {
   List<Medicine> _medicines = [];
   bool _isLoading = true;
-  final Map<String, dynamic> _uiConfig =
-      RemoteConfigService.instance.getJson('extraction_ui_config');
+  final Map<String, dynamic> _uiConfig = RemoteConfigService.instance.getJson(
+    'extraction_ui_config',
+  );
 
   Map<String, dynamic> get _headerSchema =>
       _uiConfig['header'] as Map<String, dynamic>;
@@ -57,9 +57,11 @@ class _ExtractedMedicinesScreenState extends State<ExtractedMedicinesScreen> {
       }
     }
 
-    // Prefer medicines already fetched on the AI processing screen.
+    // Prefer medicines already fetched on the AI processing screen for THIS prescription.
     final current = getIt<HomeBloc>().state;
-    if (current is MedicinesLoadedState) {
+    if (current is MedicinesLoadedState &&
+        _prescriptionId != null &&
+        current.prescriptionId == _prescriptionId) {
       _medicines = current.medicines.map(_fromEntity).toList();
       _isLoading = false;
       return;
@@ -132,10 +134,7 @@ class _ExtractedMedicinesScreenState extends State<ExtractedMedicinesScreen> {
       builder: (context) => AlertDialog(
         title: Text(
           _deleteDialogSchema['title'] as String,
-          style: GoogleFonts.sora(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
+          style: GoogleFonts.sora(fontSize: 18, fontWeight: FontWeight.w700),
         ),
         content: Text(
           '${_deleteDialogSchema['contentPrefix']}${_medicines[index].name}${_deleteDialogSchema['contentSuffix']}',
@@ -177,6 +176,7 @@ class _ExtractedMedicinesScreenState extends State<ExtractedMedicinesScreen> {
     return BlocListener<HomeBloc, HomeState>(
       listener: (context, state) {
         if (state is MedicinesLoadedState) {
+          if (_prescriptionId == null || state.prescriptionId != _prescriptionId) return;
           if (state.medicines.isEmpty) {
             if (_hasPollTimedOut) {
               _pollTimer?.cancel();
@@ -206,7 +206,9 @@ class _ExtractedMedicinesScreenState extends State<ExtractedMedicinesScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    CircularProgressIndicator(),
+                    CircularProgressIndicator(
+                      color: AppColors.primaryTeal,
+                    ),
                     SizedBox(height: 16),
                     Text('Waiting for AI to extract medicines...'),
                   ],
@@ -284,13 +286,17 @@ class _ExtractedMedicinesScreenState extends State<ExtractedMedicinesScreen> {
                     ),
                   ),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.accentTealDark.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(20),
-                      border:
-                          Border.all(color: const Color(0xFFE6FAF9), width: 0.7),
+                      border: Border.all(
+                        color: const Color(0xFFE6FAF9),
+                        width: 0.7,
+                      ),
                     ),
                     child: Text(
                       '${_medicines.length} ${_headerSchema['badgeSuffix']}',
@@ -429,14 +435,20 @@ class _ExtractedMedicinesScreenState extends State<ExtractedMedicinesScreen> {
                   children: [
                     GestureDetector(
                       onTap: () => _editMedicine(index),
-                      child: _buildIconButton(Icons.edit_outlined,
-                          const Color(0xFFE6FAF9), AppColors.primaryTeal),
+                      child: _buildIconButton(
+                        Icons.edit_outlined,
+                        const Color(0xFFE6FAF9),
+                        AppColors.primaryTeal,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     GestureDetector(
                       onTap: () => _deleteMedicine(index),
-                      child: _buildIconButton(Icons.delete_outline,
-                          const Color(0xFFFFF1F2), const Color(0xFFBE123C)),
+                      child: _buildIconButton(
+                        Icons.delete_outline,
+                        const Color(0xFFFFF1F2),
+                        const Color(0xFFBE123C),
+                      ),
                     ),
                   ],
                 ),
@@ -472,8 +484,9 @@ class _ExtractedMedicinesScreenState extends State<ExtractedMedicinesScreen> {
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 6,
-                    children:
-                        reminderTimes.map((time) => _buildTimeChip(time)).toList(),
+                    children: reminderTimes
+                        .map((time) => _buildTimeChip(time))
+                        .toList(),
                   ),
                 ],
               ),
@@ -680,8 +693,11 @@ class _ExtractedMedicinesScreenState extends State<ExtractedMedicinesScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.check_circle_outline,
-                color: AppColors.white, size: 16),
+            const Icon(
+              Icons.check_circle_outline,
+              color: AppColors.white,
+              size: 16,
+            ),
             const SizedBox(width: 8),
             Text(
               _confirmButtonSchema['text'] as String,

@@ -23,6 +23,18 @@ class _AppState extends State<App> {
     return MaterialApp(
       title: 'Care Context',
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        scaffoldBackgroundColor: Colors.white,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF0AB5A8),
+          primary: const Color(0xFF0AB5A8),
+          secondary: const Color(0xFF055F58),
+          surface: Colors.white,
+        ),
+        progressIndicatorTheme: const ProgressIndicatorThemeData(
+          color: Color(0xFF0AB5A8),
+        ),
+      ),
       navigatorKey: _navigatorKey,
       onGenerateRoute: RouteGenerator.generateRoute,
       home: const SplashScreenPage(),
