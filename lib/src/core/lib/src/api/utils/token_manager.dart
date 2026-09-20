@@ -2,6 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class TokenManager {
   static const String _tokenKey = 'auth_token';
+  static const String _refreshTokenKey = 'refresh_token';
   static TokenManager? _instance;
 
   TokenManager._();
@@ -12,11 +13,23 @@ class TokenManager {
   }
 
   String? _cachedToken;
+  String? _cachedRefreshToken;
 
   Future<void> saveToken(String token) async {
     _cachedToken = token;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_tokenKey, token);
+  }
+
+  Future<void> saveTokens({
+    required String accessToken,
+    required String refreshToken,
+  }) async {
+    _cachedToken = accessToken;
+    _cachedRefreshToken = refreshToken;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_tokenKey, accessToken);
+    await prefs.setString(_refreshTokenKey, refreshToken);
   }
 
   Future<String?> getToken() async {
@@ -26,10 +39,19 @@ class TokenManager {
     return _cachedToken;
   }
 
+  Future<String?> getRefreshToken() async {
+    if (_cachedRefreshToken != null) return _cachedRefreshToken;
+    final prefs = await SharedPreferences.getInstance();
+    _cachedRefreshToken = prefs.getString(_refreshTokenKey);
+    return _cachedRefreshToken;
+  }
+
   Future<void> clearToken() async {
     _cachedToken = null;
+    _cachedRefreshToken = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
+    await prefs.remove(_refreshTokenKey);
   }
 
   bool get hasToken => _cachedToken != null;

@@ -27,10 +27,8 @@ class ApiService {
     _initializeInterceptors();
   }
 
-  // TODO: Replace with real auth flow (Firebase token → backend JWT exchange)
   static Future<ApiService> authenticated() async {
-    const token =
-        'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIwNjc3YTZkMy1lNTBjLTRhYjgtOGJlMy1jZjhkYzA5M2IyMWMiLCJpYXQiOjE3ODgxMTMyOTYsImV4cCI6NDc4ODExMzI5NiwianRpIjoiMGMyYTE1YmItZjFhYi00Mjc1LWExMDEtODBhZWRjY2M5MTQ5Iiwicm9sZSI6IlBBVElFTlQiLCJwaG9uZSI6Iis5MTkzOTg3MTI5NTcifQ.Qnth8ukuV0TIhmNN90xQWSeHl8x3K15wsa0a-MOSjZc';
+    final token = await TokenManager.instance.getToken();
     return ApiService(token: token);
   }
 
@@ -50,8 +48,44 @@ class ApiService {
           developer.log('RESPONSE: ${response.statusCode}');
           handler.next(response);
         },
-        onError: (error, handler) {
+        onError: (error, handler) async {
           developer.log('ERROR: ${error.response?.statusCode}');
+          if (error.response?.statusCode == 401 &&
+              !error.requestOptions.path.contains('/auth/')) {
+            final refreshToken = await TokenManager.instance.getRefreshToken();
+            if (refreshToken != null && refreshToken.isNotEmpty) {
+              try {
+                final refreshResponse = await Dio(
+                  BaseOptions(baseUrl: ApiConstants.baseUrl),
+                ).post(
+                  ApiConstants.authRefresh,
+                  data: {'refreshToken': refreshToken},
+                );
+                final resData = refreshResponse.data;
+                String? newAccessToken;
+                String? newRefreshToken;
+                if (resData is Map<String, dynamic>) {
+                  final dataMap = resData['data'] is Map<String, dynamic>
+                      ? resData['data']
+                      : resData;
+                  newAccessToken = dataMap['accessToken'] ?? dataMap['token'];
+                  newRefreshToken = dataMap['refreshToken'];
+                }
+                if (newAccessToken != null && newAccessToken.isNotEmpty) {
+                  await TokenManager.instance.saveTokens(
+                    accessToken: newAccessToken,
+                    refreshToken: newRefreshToken ?? refreshToken,
+                  );
+                  final opts = error.requestOptions;
+                  opts.headers['Authorization'] = 'Bearer $newAccessToken';
+                  final cloneReq = await _dio.fetch(opts);
+                  return handler.resolve(cloneReq);
+                }
+              } catch (e) {
+                developer.log('Failed to refresh token: $e');
+              }
+            }
+          }
           handler.next(error);
         },
       ),
@@ -75,6 +109,11 @@ class ApiService {
   // ✅ PUT
   Future<Response> put(String url, {dynamic data}) async {
     return await _dio.put(url, data: data);
+  }
+
+  // ✅ PATCH
+  Future<Response> patch(String url, {dynamic data}) async {
+    return await _dio.patch(url, data: data);
   }
 
   // ✅ DELETE

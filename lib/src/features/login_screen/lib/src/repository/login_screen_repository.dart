@@ -56,6 +56,20 @@ class LoginScreenRepository {
     );
   }
 
+  Future<Map<String, dynamic>> verifyAuthWithBackend({
+    required String firebaseToken,
+    required String phoneNumber,
+  }) async {
+    return await apiService.verifyAuthWithBackend(
+      firebaseToken: firebaseToken,
+      phoneNumber: phoneNumber,
+    );
+  }
+
+  Future<void> submitConsent() async {
+    await apiService.submitConsent();
+  }
+
   Future<void> saveAuthToken(String token) async {
     await apiService.saveAuthToken(token);
   }

@@ -1,3 +1,4 @@
+import 'package:core/core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class FirebaseAuthService {
@@ -48,6 +49,7 @@ class FirebaseAuthService {
   }
 
   Future<void> signOut() async {
+    await TokenManager.instance.clearToken();
     await _auth.signOut();
   }
 

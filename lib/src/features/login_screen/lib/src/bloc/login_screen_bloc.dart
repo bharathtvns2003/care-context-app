@@ -73,13 +73,23 @@ class LoginScreenBloc extends Bloc<LoginScreenEvent, LoginScreenState> {
     try {
       emit(LoginScreenLoadingState());
       final userCredential = await repository.verifyOtp(event.otp);
-      final token = await userCredential.user?.getIdToken() ?? '';
-      if (token.isNotEmpty) {
-        await repository.saveAuthToken(token);
+      final firebaseToken = await userCredential.user?.getIdToken() ?? '';
+      
+      if (firebaseToken.isNotEmpty) {
+        await repository.verifyAuthWithBackend(
+          firebaseToken: firebaseToken,
+          phoneNumber: event.phoneNumber,
+        );
+        try {
+          await repository.submitConsent();
+        } catch (_) {
+          // Non-blocking if consent endpoint fails or was already submitted
+        }
       }
+
       final isNewUser =
           userCredential.additionalUserInfo?.isNewUser ?? true;
-      emit(OtpVerifiedState(token: token, isNewUser: isNewUser));
+      emit(OtpVerifiedState(token: firebaseToken, isNewUser: isNewUser));
     } catch (e) {
       String message = 'Verification failed';
       if (e is FirebaseAuthException) {
@@ -102,13 +112,20 @@ class LoginScreenBloc extends Bloc<LoginScreenEvent, LoginScreenState> {
       final userCredential = await repository.signInWithCredential(
         event.credential,
       );
-      final token = await userCredential.user?.getIdToken() ?? '';
-      if (token.isNotEmpty) {
-        await repository.saveAuthToken(token);
+      final firebaseToken = await userCredential.user?.getIdToken() ?? '';
+      if (firebaseToken.isNotEmpty) {
+        final phone = userCredential.user?.phoneNumber ?? '';
+        await repository.verifyAuthWithBackend(
+          firebaseToken: firebaseToken,
+          phoneNumber: phone,
+        );
+        try {
+          await repository.submitConsent();
+        } catch (_) {}
       }
       final isNewUser =
           userCredential.additionalUserInfo?.isNewUser ?? true;
-      emit(OtpVerifiedState(token: token, isNewUser: isNewUser));
+      emit(OtpVerifiedState(token: firebaseToken, isNewUser: isNewUser));
     } catch (e) {
       emit(LoginScreenErrorState(message: 'Auto-verification failed'));
     }
