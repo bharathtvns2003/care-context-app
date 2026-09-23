@@ -98,4 +98,8 @@ class HomeRepository {
       deviceName: deviceName,
     );
   }
+
+  Future<void> respondSlot({String action = 'taken'}) async {
+    await apiService.respondSlot(action: action);
+  }
 }

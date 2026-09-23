@@ -3,6 +3,7 @@ import 'package:core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import '../../bloc/home_bloc.dart';
 import '../../theme/app_colors.dart';
 import 'add_medicine_screen.dart';
 
@@ -356,7 +357,7 @@ class _TodaysScheduleScreenState extends State<TodaysScheduleScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '1 tablet · ${_getMealInstruction(dose.time)}',
+                      'Tablet · ${_getMealInstruction(dose.time)}',
                       style: GoogleFonts.dmSans(
                         fontSize: 11,
                         fontWeight: FontWeight.w400,
@@ -376,6 +377,7 @@ class _TodaysScheduleScreenState extends State<TodaysScheduleScreen> {
                         isTaken: true,
                       );
                     });
+                    context.read<HomeBloc>().add(RespondSlotEvent(action: 'taken'));
                   }
                 },
                 child: Container(

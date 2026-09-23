@@ -18,6 +18,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<ActivateRemindersEvent>(_onActivateReminders);
     on<LoadPrescriptionsEvent>(_onLoadPrescriptions);
     on<RegisterDeviceEvent>(_onRegisterDevice);
+    on<RespondSlotEvent>(_onRespondSlot);
   }
 
   Future<void> _onLoadHomeData(
@@ -151,6 +152,18 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         deviceName: event.deviceName,
       );
       emit(DeviceRegisteredState());
+    } catch (e) {
+      emit(HomeErrorState(message: e.toString()));
+    }
+  }
+
+  Future<void> _onRespondSlot(
+    RespondSlotEvent event,
+    Emitter<HomeState> emit,
+  ) async {
+    try {
+      await repository.respondSlot(action: event.action);
+      emit(SlotRespondedState());
     } catch (e) {
       emit(HomeErrorState(message: e.toString()));
     }

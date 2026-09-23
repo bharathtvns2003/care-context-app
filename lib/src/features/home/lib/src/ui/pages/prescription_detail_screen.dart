@@ -332,7 +332,7 @@ class PrescriptionDetailScreen extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  '📤 Share',
+                  'Share',
                   style: GoogleFonts.sora(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -354,7 +354,7 @@ class PrescriptionDetailScreen extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                '📄 Export PDF',
+                'Export as Text',
                 style: GoogleFonts.sora(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,

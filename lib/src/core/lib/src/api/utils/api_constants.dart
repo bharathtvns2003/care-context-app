@@ -7,6 +7,7 @@ class ApiConstants {
   static const String prescriptionsUpload = '/api/prescriptions/upload';
   static const String prescriptions = '/api/prescriptions';
   static const String deviceTokens = '/api/device-tokens';
+  static const String slotsRespond = '/api/slots/respond';
 
   static const String authVerify = '/auth/verify';
   static const String authRefresh = '/auth/token/refresh';

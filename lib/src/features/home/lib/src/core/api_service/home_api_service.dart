@@ -123,4 +123,13 @@ class HomeApiService {
     );
     return _unwrap(response.data);
   }
+
+  Future<Map<String, dynamic>> respondSlot({String action = 'taken'}) async {
+    final api = await _api;
+    final response = await api.post(
+      ApiConstants.slotsRespond,
+      data: {'action': action},
+    );
+    return _unwrap(response.data);
+  }
 }

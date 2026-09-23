@@ -46,6 +46,8 @@ class PrescriptionsLoadedState extends HomeState {
 
 class DeviceRegisteredState extends HomeState {}
 
+class SlotRespondedState extends HomeState {}
+
 class HomeErrorState extends HomeState {
   final String message;
   HomeErrorState({this.message = 'Something went wrong'});

@@ -227,7 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       Text(
-                        'Akash',
+                        'User',
                         style: GoogleFonts.sora(
                           fontSize: 22,
                           fontWeight: FontWeight.w800,

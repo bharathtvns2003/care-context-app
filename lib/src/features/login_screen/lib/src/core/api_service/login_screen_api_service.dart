@@ -67,10 +67,14 @@ class LoginScreenApiService {
       final accessToken = (dataMap['accessToken'] ?? dataMap['token']) as String?;
       final refreshToken = dataMap['refreshToken'] as String?;
       if (accessToken != null && accessToken.isNotEmpty) {
-        await TokenManager.instance.saveTokens(
-          accessToken: accessToken,
-          refreshToken: refreshToken ?? '',
-        );
+        if (refreshToken != null && refreshToken.isNotEmpty) {
+          await TokenManager.instance.saveTokens(
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+          );
+        } else {
+          await TokenManager.instance.saveToken(accessToken);
+        }
       }
       return dataMap;
     }

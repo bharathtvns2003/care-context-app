@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:core/core.dart';
 import 'package:design/design.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class SplashScreenPage extends StatefulWidget {
@@ -12,20 +13,53 @@ class SplashScreenPage extends StatefulWidget {
 }
 
 class _SplashScreenPageState extends State<SplashScreenPage> {
-  Timer? _timer;
-
   @override
   void initState() {
     super.initState();
-    _timer = Timer(const Duration(seconds: 1), () {
-      CcRouteHelper.pushAndPopUntil(CcRouteConstants.phoneLogin);
-    });
+    _bootstrap();
   }
 
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
+  Future<void> _bootstrap() async {
+    // Keep the brand splash visible briefly while we restore session.
+    await Future<void>.delayed(const Duration(milliseconds: 800));
+    if (!mounted) return;
+
+    final restored = await ApiService.tryRestoreSession();
+    if (!mounted) return;
+
+    if (restored) {
+      CcRouteHelper.pushAndPopUntil(CcRouteConstants.homeScreen);
+      return;
+    }
+
+    final firebaseRestored = await _tryRestoreFromFirebase();
+    if (!mounted) return;
+
+    if (firebaseRestored) {
+      CcRouteHelper.pushAndPopUntil(CcRouteConstants.homeScreen);
+      return;
+    }
+
+    CcRouteHelper.pushAndPopUntil(CcRouteConstants.phoneLogin);
+  }
+
+  Future<bool> _tryRestoreFromFirebase() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return false;
+
+    final firebaseToken = await user.getIdToken();
+    final phone = user.phoneNumber;
+    if (firebaseToken == null ||
+        firebaseToken.isEmpty ||
+        phone == null ||
+        phone.isEmpty) {
+      return false;
+    }
+
+    return ApiService.exchangeFirebaseSession(
+      firebaseToken: firebaseToken,
+      phoneNumber: phone,
+    );
   }
 
   @override

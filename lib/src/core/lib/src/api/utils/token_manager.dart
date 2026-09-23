@@ -54,5 +54,14 @@ class TokenManager {
     await prefs.remove(_refreshTokenKey);
   }
 
-  bool get hasToken => _cachedToken != null;
+  Future<bool> hasStoredSession() async {
+    final access = await getToken();
+    final refresh = await getRefreshToken();
+    return (access != null && access.isNotEmpty) ||
+        (refresh != null && refresh.isNotEmpty);
+  }
+
+  bool get hasToken =>
+      (_cachedToken != null && _cachedToken!.isNotEmpty) ||
+      (_cachedRefreshToken != null && _cachedRefreshToken!.isNotEmpty);
 }

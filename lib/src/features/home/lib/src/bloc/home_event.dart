@@ -58,3 +58,8 @@ class RegisterDeviceEvent extends HomeEvent {
     this.deviceName,
   });
 }
+
+class RespondSlotEvent extends HomeEvent {
+  final String action;
+  RespondSlotEvent({this.action = 'taken'});
+}

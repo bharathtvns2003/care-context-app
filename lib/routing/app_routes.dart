@@ -68,8 +68,11 @@ class AppRoutes {
               medicines: RouteGenerator.getArgsOr<List<Medicine>>(settings, []),
             ),
           ),
-      CcRouteConstants.todaysSchedule: (settings) => TodaysScheduleScreen(
-            medicines: RouteGenerator.getArgsOr<List<Medicine>>(settings, []),
+      CcRouteConstants.todaysSchedule: (settings) => BlocProvider.value(
+            value: getIt<HomeBloc>(),
+            child: TodaysScheduleScreen(
+              medicines: RouteGenerator.getArgsOr<List<Medicine>>(settings, []),
+            ),
           ),
       CcRouteConstants.medicineInfo: (settings) => MedicineInfoScreen(
             medicine: RouteGenerator.getArgs<Medicine>(settings)!,
