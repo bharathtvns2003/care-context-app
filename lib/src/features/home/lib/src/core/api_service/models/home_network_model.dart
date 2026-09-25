@@ -50,6 +50,47 @@ class UserNetworkModel {
   }
 }
 
+class ReminderTimeNetworkModel {
+  final String? slotId;
+  final String time;
+  final String? scheduledAt;
+  final String? status;
+
+  const ReminderTimeNetworkModel({
+    this.slotId,
+    required this.time,
+    this.scheduledAt,
+    this.status,
+  });
+
+  factory ReminderTimeNetworkModel.fromJson(dynamic json) {
+    if (json is Map<String, dynamic>) {
+      return ReminderTimeNetworkModel(
+        slotId: json['slotId'] as String?,
+        time: json['time'] ?? '',
+        scheduledAt: json['scheduledAt'] as String?,
+        status: json['status'] as String?,
+      );
+    }
+    if (json is String) {
+      return ReminderTimeNetworkModel(time: json);
+    }
+    return const ReminderTimeNetworkModel(time: '');
+  }
+
+  dynamic toJson() {
+    if (slotId == null && scheduledAt == null && status == null) {
+      return time;
+    }
+    return {
+      if (slotId != null) 'slotId': slotId,
+      'time': time,
+      if (scheduledAt != null) 'scheduledAt': scheduledAt,
+      if (status != null) 'status': status,
+    };
+  }
+}
+
 class MedicineNetworkModel {
   final String? id;
   final String name;
@@ -58,7 +99,7 @@ class MedicineNetworkModel {
   final String? frequencyType;
   final String? dayOfWeek;
   final String duration;
-  final List<String> reminderTimes;
+  final List<ReminderTimeNetworkModel> reminderTimes;
 
   const MedicineNetworkModel({
     this.id,
@@ -80,7 +121,10 @@ class MedicineNetworkModel {
       frequencyType: json['frequencyType'] as String?,
       dayOfWeek: json['dayOfWeek'] as String?,
       duration: json['duration'] ?? '',
-      reminderTimes: List<String>.from(json['reminderTimes'] ?? []),
+      reminderTimes: (json['reminderTimes'] as List<dynamic>?)
+              ?.map((e) => ReminderTimeNetworkModel.fromJson(e))
+              .toList() ??
+          [],
     );
   }
 
@@ -92,7 +136,7 @@ class MedicineNetworkModel {
       if (frequencyType != null) 'frequencyType': frequencyType,
       if (dayOfWeek != null) 'dayOfWeek': dayOfWeek,
       'duration': duration,
-      'reminderTimes': reminderTimes,
+      'reminderTimes': reminderTimes.map((e) => e.toJson()).toList(),
     };
   }
 }

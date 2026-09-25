@@ -54,6 +54,19 @@ class TokenManager {
     await prefs.remove(_refreshTokenKey);
   }
 
+  /// Clears all stored tokens and preferences on logout.
+  Future<void> clearAll() async {
+    _cachedToken = null;
+    _cachedRefreshToken = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+  }
+
+  /// Alias to clear all session tokens and data on user logout.
+  Future<void> clearAllOnLogout() async {
+    await clearAll();
+  }
+
   Future<bool> hasStoredSession() async {
     final access = await getToken();
     final refresh = await getRefreshToken();

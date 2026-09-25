@@ -28,6 +28,32 @@ class UserEntity {
   bool get isAbhaLinked => abhaStatus == 'linked';
 }
 
+class ReminderTimeEntity {
+  final String? slotId;
+  final String time;
+  final String? scheduledAt;
+  final String? status;
+
+  const ReminderTimeEntity({
+    this.slotId,
+    required this.time,
+    this.scheduledAt,
+    this.status,
+  });
+
+  dynamic toApiJson() {
+    if (slotId == null && scheduledAt == null && status == null) {
+      return time;
+    }
+    return {
+      if (slotId != null) 'slotId': slotId,
+      'time': time,
+      if (scheduledAt != null) 'scheduledAt': scheduledAt,
+      if (status != null) 'status': status,
+    };
+  }
+}
+
 class MedicineEntity {
   final String? id;
   final String name;
@@ -36,7 +62,7 @@ class MedicineEntity {
   final String? frequencyType;
   final String? dayOfWeek;
   final String duration;
-  final List<String> reminderTimes;
+  final List<ReminderTimeEntity> reminderTimes;
 
   const MedicineEntity({
     this.id,
@@ -57,7 +83,7 @@ class MedicineEntity {
       if (frequencyType != null) 'frequencyType': frequencyType,
       if (dayOfWeek != null) 'dayOfWeek': dayOfWeek,
       'duration': duration,
-      'reminderTimes': reminderTimes,
+      'reminderTimes': reminderTimes.map((e) => e.toApiJson()).toList(),
     };
   }
 }

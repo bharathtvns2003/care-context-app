@@ -29,7 +29,9 @@ class HomeApiService {
     return [];
   }
 
-  Future<Map<String, dynamic>> uploadPrescription(List<String> filePaths) async {
+  Future<Map<String, dynamic>> uploadPrescription(
+    List<String> filePaths,
+  ) async {
     final api = await _api;
     final response = await api.uploadMultipart(
       ApiConstants.prescriptionsUpload,
@@ -39,15 +41,21 @@ class HomeApiService {
     return _unwrap(response.data);
   }
 
-  Future<Map<String, dynamic>> getPrescriptionInfo(String prescriptionId) async {
+  Future<Map<String, dynamic>> getPrescriptionInfo(
+    String prescriptionId,
+  ) async {
     final api = await _api;
-    final response = await api.get(ApiConstants.prescriptionById(prescriptionId));
+    final response = await api.get(
+      ApiConstants.prescriptionById(prescriptionId),
+    );
     return _unwrap(response.data);
   }
 
   Future<List<dynamic>> getMedicines(String prescriptionId) async {
     final api = await _api;
-    final response = await api.get(ApiConstants.prescriptionMedicines(prescriptionId));
+    final response = await api.get(
+      ApiConstants.prescriptionMedicines(prescriptionId),
+    );
     return _unwrapList(response.data);
   }
 
@@ -100,10 +108,7 @@ class HomeApiService {
 
   Future<void> activateReminders(String prescriptionId) async {
     final api = await _api;
-    await api.post(
-      ApiConstants.activateReminders(prescriptionId),
-      data: {},
-    );
+    await api.post(ApiConstants.activateReminders(prescriptionId), data: {});
   }
 
   Future<Map<String, dynamic>> registerDevice({
@@ -112,24 +117,21 @@ class HomeApiService {
     String? deviceName,
   }) async {
     final api = await _api;
-    final data = <String, dynamic>{
-      'fcmToken': fcmToken,
-      'platform': platform,
-    };
+    final data = <String, dynamic>{'fcmToken': fcmToken, 'platform': platform};
     if (deviceName != null) data['deviceName'] = deviceName;
-    final response = await api.post(
-      ApiConstants.deviceTokens,
-      data: data,
-    );
+    final response = await api.post(ApiConstants.deviceTokens, data: data);
     return _unwrap(response.data);
   }
 
-  Future<Map<String, dynamic>> respondSlot({String action = 'taken'}) async {
+  Future<Map<String, dynamic>> respondSlot({
+    required String slotId,
+    String action = 'taken',
+  }) async {
     final api = await _api;
-    final response = await api.post(
-      ApiConstants.slotsRespond,
-      data: {'action': action},
-    );
+    final url = slotId.isNotEmpty
+        ? ApiConstants.slotRespond(slotId)
+        : ApiConstants.slotsRespond;
+    final response = await api.post(url, data: {'action': action});
     return _unwrap(response.data);
   }
 }

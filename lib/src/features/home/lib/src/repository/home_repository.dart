@@ -99,7 +99,10 @@ class HomeRepository {
     );
   }
 
-  Future<void> respondSlot({String action = 'taken'}) async {
-    await apiService.respondSlot(action: action);
+  Future<void> respondSlot({
+    required String slotId,
+    String action = 'taken',
+  }) async {
+    await apiService.respondSlot(slotId: slotId, action: action);
   }
 }

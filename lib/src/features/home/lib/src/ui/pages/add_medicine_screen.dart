@@ -3,12 +3,40 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/app_colors.dart';
 
+class ReminderTime {
+  final String? slotId;
+  final String time;
+  final String? scheduledAt;
+  final String? status;
+
+  ReminderTime({
+    this.slotId,
+    required this.time,
+    this.scheduledAt,
+    this.status,
+  });
+
+  ReminderTime copyWith({
+    String? slotId,
+    String? time,
+    String? scheduledAt,
+    String? status,
+  }) {
+    return ReminderTime(
+      slotId: slotId ?? this.slotId,
+      time: time ?? this.time,
+      scheduledAt: scheduledAt ?? this.scheduledAt,
+      status: status ?? this.status,
+    );
+  }
+}
+
 class Medicine {
   String name;
   String dosage;
   String frequency;
   String duration;
-  List<String> reminderTimes;
+  List<ReminderTime> reminderTimes;
   bool hasWarning;
   String? warningDetail;
 
@@ -27,7 +55,7 @@ class Medicine {
     String? dosage,
     String? frequency,
     String? duration,
-    List<String>? reminderTimes,
+    List<ReminderTime>? reminderTimes,
     bool? hasWarning,
     String? warningDetail,
   }) {
@@ -58,7 +86,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
   late TextEditingController _dosageController;
   late TextEditingController _durationController;
   String _selectedFrequency = 'Once daily';
-  List<String> _reminderTimes = ['08:00'];
+  List<ReminderTime> _reminderTimes = [ReminderTime(time: '08:00')];
 
   final List<String> _frequencyOptions = [
     'Once daily',
@@ -101,17 +129,17 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
       setState(() {
         final time =
             '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
-        if (!_reminderTimes.contains(time)) {
-          _reminderTimes.add(time);
-          _reminderTimes.sort();
+        if (!_reminderTimes.any((r) => r.time == time)) {
+          _reminderTimes.add(ReminderTime(time: time));
+          _reminderTimes.sort((a, b) => a.time.compareTo(b.time));
         }
       });
     }
   }
 
-  void _removeReminderTime(String time) {
+  void _removeReminderTime(ReminderTime time) {
     setState(() {
-      _reminderTimes.remove(time);
+      _reminderTimes.removeWhere((r) => r == time || r.time == time.time);
     });
   }
 
@@ -408,9 +436,9 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
     );
   }
 
-  Widget _buildTimeChip(String time) {
+  Widget _buildTimeChip(ReminderTime reminder) {
     return GestureDetector(
-      onLongPress: () => _removeReminderTime(time),
+      onLongPress: () => _removeReminderTime(reminder),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
@@ -419,7 +447,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
           border: Border.all(color: AppColors.accentTealDark, width: 1.3),
         ),
         child: Text(
-          time,
+          reminder.time,
           style: GoogleFonts.dmSans(
             fontSize: 13,
             fontWeight: FontWeight.w700,

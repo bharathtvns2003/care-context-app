@@ -26,7 +26,8 @@ class ReminderScheduleScreen extends StatelessWidget {
   Map<String, List<Medicine>> _groupByTime() {
     final Map<String, List<Medicine>> grouped = {};
     for (final medicine in medicines) {
-      for (final time in medicine.reminderTimes) {
+      for (final reminder in medicine.reminderTimes) {
+        final time = reminder.time;
         if (!grouped.containsKey(time)) {
           grouped[time] = [];
         }

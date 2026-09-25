@@ -60,6 +60,7 @@ class RegisterDeviceEvent extends HomeEvent {
 }
 
 class RespondSlotEvent extends HomeEvent {
+  final String slotId;
   final String action;
-  RespondSlotEvent({this.action = 'taken'});
+  RespondSlotEvent({required this.slotId, this.action = 'taken'});
 }

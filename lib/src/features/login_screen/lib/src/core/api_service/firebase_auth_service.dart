@@ -49,7 +49,7 @@ class FirebaseAuthService {
   }
 
   Future<void> signOut() async {
-    await TokenManager.instance.clearToken();
+    await TokenManager.instance.clearAllOnLogout();
     await _auth.signOut();
   }
 

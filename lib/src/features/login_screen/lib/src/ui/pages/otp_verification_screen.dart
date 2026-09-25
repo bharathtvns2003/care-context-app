@@ -21,6 +21,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     (_) => TextEditingController(),
   );
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+  final List<FocusNode> _keyboardFocusNodes = List.generate(
+    6,
+    (_) => FocusNode(),
+  );
   int _currentIndex = 0;
   int _resendSeconds = 38;
   Timer? _timer;
@@ -55,6 +59,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     for (var node in _focusNodes) {
       node.dispose();
     }
+    for (var node in _keyboardFocusNodes) {
+      node.dispose();
+    }
     super.dispose();
   }
 
@@ -71,7 +78,55 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   }
 
   void _onOtpChanged(String value, int index) {
-    if (value.isNotEmpty) {
+    final digitsOnly = value.replaceAll(RegExp(r'\D'), '');
+
+    if (digitsOnly.isEmpty) {
+      _controllers[index].text = '';
+      setState(() {
+        _currentIndex = index;
+      });
+      return;
+    }
+
+    if (digitsOnly.length > 1) {
+      final startIdx = (digitsOnly.length >= 6) ? 0 : index;
+      final availableSlots = 6 - startIdx;
+      final maxLen =
+          digitsOnly.length < availableSlots
+              ? digitsOnly.length
+              : availableSlots;
+
+      for (int i = 0; i < maxLen; i++) {
+        final controller = _controllers[startIdx + i];
+        controller.text = digitsOnly[i];
+        controller.selection = TextSelection.collapsed(
+          offset: controller.text.length,
+        );
+      }
+
+      if (digitsOnly.length >= 6) {
+        for (int i = startIdx + maxLen; i < 6; i++) {
+          _controllers[i].text = '';
+        }
+      }
+
+      final nextFocus = startIdx + maxLen;
+      if (nextFocus < 6) {
+        _focusNodes[nextFocus].requestFocus();
+        setState(() {
+          _currentIndex = nextFocus;
+        });
+      } else {
+        _focusNodes[5].unfocus();
+        setState(() {
+          _currentIndex = 5;
+        });
+      }
+    } else {
+      _controllers[index].text = digitsOnly;
+      _controllers[index].selection = TextSelection.collapsed(
+        offset: digitsOnly.length,
+      );
       if (index < 5) {
         _focusNodes[index + 1].requestFocus();
         setState(() {
@@ -79,6 +134,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         });
       } else {
         _focusNodes[index].unfocus();
+        setState(() {
+          _currentIndex = index;
+        });
       }
     }
   }
@@ -230,7 +288,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               child: Padding(
                 padding: EdgeInsets.only(right: index < 5 ? 9 : 0),
                 child: KeyboardListener(
-                  focusNode: FocusNode(),
+                  focusNode: _keyboardFocusNodes[index],
                   onKeyEvent: (event) => _onKeyPressed(event, index),
                   child: Container(
                     height: 55,
@@ -258,7 +316,17 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                       focusNode: _focusNodes[index],
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.center,
-                      maxLength: 1,
+                      onTap: () {
+                        if (_controllers[index].text.isNotEmpty) {
+                          _controllers[index].selection = TextSelection(
+                            baseOffset: 0,
+                            extentOffset: _controllers[index].text.length,
+                          );
+                        }
+                        setState(() {
+                          _currentIndex = index;
+                        });
+                      },
                       onChanged: (value) => _onOtpChanged(value, index),
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       style: GoogleFonts.sora(

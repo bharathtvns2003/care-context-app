@@ -11,28 +11,40 @@ class HomeMockContract {
         "dosage": "500mg",
         "frequency": "Twice a day",
         "duration": "5 days",
-        "reminderTimes": ["08:00", "20:00"],
+        "reminderTimes": [
+          {"slotId": "slot-p1-1", "time": "08:00", "scheduledAt": "2026-09-25T08:00+05:30", "status": "PENDING"},
+          {"slotId": "slot-p1-2", "time": "20:00", "scheduledAt": "2026-09-25T20:00+05:30", "status": "PENDING"}
+        ],
       },
       {
         "name": "Vitamin D",
         "dosage": "1000 IU",
         "frequency": "Once daily",
         "duration": "30 days",
-        "reminderTimes": ["09:00"],
+        "reminderTimes": [
+          {"slotId": "slot-vd-1", "time": "09:00", "scheduledAt": "2026-09-25T09:00+05:30", "status": "PENDING"}
+        ],
       },
       {
         "name": "Amoxicillin",
         "dosage": "250mg",
         "frequency": "Three times a day",
         "duration": "7 days",
-        "reminderTimes": ["08:00", "14:00", "20:00"],
+        "reminderTimes": [
+          {"slotId": "slot-am-1", "time": "08:00", "scheduledAt": "2026-09-25T08:00+05:30", "status": "PENDING"},
+          {"slotId": "slot-am-2", "time": "14:00", "scheduledAt": "2026-09-25T14:00+05:30", "status": "PENDING"},
+          {"slotId": "slot-am-3", "time": "20:00", "scheduledAt": "2026-09-25T20:00+05:30", "status": "PENDING"}
+        ],
       },
       {
         "name": "Metformin",
         "dosage": "500mg",
         "frequency": "Twice daily",
         "duration": "3 months",
-        "reminderTimes": ["08:00", "20:00"],
+        "reminderTimes": [
+          {"slotId": "slot-mf-1", "time": "08:00", "scheduledAt": "2026-09-25T08:00+05:30", "status": "PENDING"},
+          {"slotId": "slot-mf-2", "time": "20:00", "scheduledAt": "2026-09-25T20:00+05:30", "status": "PENDING"}
+        ],
       },
     ],
     "prescriptions": [

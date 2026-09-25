@@ -49,7 +49,14 @@ class _HomeScreenState extends State<HomeScreen> {
       dosage: e.dosage,
       frequency: e.frequency,
       duration: e.duration,
-      reminderTimes: e.reminderTimes,
+      reminderTimes: e.reminderTimes
+          .map((r) => ReminderTime(
+                slotId: r.slotId,
+                time: r.time,
+                scheduledAt: r.scheduledAt,
+                status: r.status,
+              ))
+          .toList(),
     )).toList();
     _reminders = _generateReminders();
 
@@ -66,7 +73,14 @@ class _HomeScreenState extends State<HomeScreen> {
       dosage: e.dosage,
       frequency: e.frequency,
       duration: e.duration,
-      reminderTimes: e.reminderTimes,
+      reminderTimes: e.reminderTimes
+          .map((r) => ReminderTime(
+                slotId: r.slotId,
+                time: r.time,
+                scheduledAt: r.scheduledAt,
+                status: r.status,
+              ))
+          .toList(),
     )).toList();
 
     final existingNames = _medicines.map((m) => m.name).toSet();
@@ -84,12 +98,16 @@ class _HomeScreenState extends State<HomeScreen> {
   List<MedicineReminder> _generateReminders() {
     final List<MedicineReminder> reminders = [];
     for (final medicine in _medicines) {
-      for (final time in medicine.reminderTimes) {
+      for (final reminder in medicine.reminderTimes) {
+        final isTaken = reminder.status == 'TAKEN' ||
+            (reminder.status == null && _isTimePassed(reminder.time));
         reminders.add(
           MedicineReminder(
             medicine: medicine,
-            time: time,
-            isTaken: _isTimePassed(time),
+            time: reminder.time,
+            slotId: reminder.slotId,
+            status: reminder.status,
+            isTaken: isTaken,
           ),
         );
       }
@@ -764,9 +782,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     _reminders[index] = MedicineReminder(
                       medicine: reminder.medicine,
                       time: reminder.time,
+                      slotId: reminder.slotId,
+                      status: 'TAKEN',
                       isTaken: true,
                     );
                   });
+                  if (reminder.slotId != null && reminder.slotId!.isNotEmpty) {
+                    context.read<HomeBloc>().add(
+                      RespondSlotEvent(
+                        slotId: reminder.slotId!,
+                        action: 'taken',
+                      ),
+                    );
+                  }
                 }
               },
               child: Container(
@@ -1147,11 +1175,15 @@ class _HomeScreenState extends State<HomeScreen> {
 class MedicineReminder {
   final Medicine medicine;
   final String time;
+  final String? slotId;
+  final String? status;
   final bool isTaken;
 
   MedicineReminder({
     required this.medicine,
     required this.time,
+    this.slotId,
+    this.status,
     required this.isTaken,
   });
 }

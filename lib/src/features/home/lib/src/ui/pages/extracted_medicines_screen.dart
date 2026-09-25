@@ -104,7 +104,14 @@ class _ExtractedMedicinesScreenState extends State<ExtractedMedicinesScreen> {
     dosage: e.dosage,
     frequency: e.frequency,
     duration: e.duration,
-    reminderTimes: e.reminderTimes,
+    reminderTimes: e.reminderTimes
+        .map((r) => ReminderTime(
+              slotId: r.slotId,
+              time: r.time,
+              scheduledAt: r.scheduledAt,
+              status: r.status,
+            ))
+        .toList(),
   );
 
   void _editMedicine(int index) async {
@@ -394,7 +401,7 @@ class _ExtractedMedicinesScreenState extends State<ExtractedMedicinesScreen> {
     required String dosage,
     required String frequency,
     required String duration,
-    required List<String> reminderTimes,
+    required List<ReminderTime> reminderTimes,
     bool hasWarning = false,
     String? warningDetail,
   }) {
@@ -485,7 +492,7 @@ class _ExtractedMedicinesScreenState extends State<ExtractedMedicinesScreen> {
                   Wrap(
                     spacing: 6,
                     children: reminderTimes
-                        .map((time) => _buildTimeChip(time))
+                        .map((rt) => _buildTimeChip(rt.time))
                         .toList(),
                   ),
                 ],

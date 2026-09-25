@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../api/utils/token_manager.dart';
+
 import 'api_log_store.dart';
 import 'api_logs_screen.dart';
 
@@ -94,7 +96,8 @@ class _DebugOverlayState extends State<DebugOverlay> {
 
   NavigatorState get _navigator => widget.navigatorKey!.currentState!;
 
-  void _handleLogout() {
+  void _handleLogout() async {
+    await TokenManager.instance.clearAllOnLogout();
     _navigator.pushNamedAndRemoveUntil('/login/phone', (_) => false);
   }
 

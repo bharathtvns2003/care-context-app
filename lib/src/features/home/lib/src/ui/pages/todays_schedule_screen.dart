@@ -28,12 +28,16 @@ class _TodaysScheduleScreenState extends State<TodaysScheduleScreen> {
   List<ScheduledDose> _generateDoses() {
     final List<ScheduledDose> doses = [];
     for (final medicine in widget.medicines) {
-      for (final time in medicine.reminderTimes) {
+      for (final reminder in medicine.reminderTimes) {
+        final isTaken = reminder.status == 'TAKEN' ||
+            (reminder.status == null && _isTimePassed(reminder.time));
         doses.add(
           ScheduledDose(
             medicine: medicine,
-            time: time,
-            isTaken: _isTimePassed(time),
+            time: reminder.time,
+            slotId: reminder.slotId,
+            status: reminder.status,
+            isTaken: isTaken,
           ),
         );
       }
@@ -374,10 +378,17 @@ class _TodaysScheduleScreenState extends State<TodaysScheduleScreen> {
                       _doses[index] = ScheduledDose(
                         medicine: dose.medicine,
                         time: dose.time,
+                        slotId: dose.slotId,
+                        status: 'TAKEN',
                         isTaken: true,
                       );
                     });
-                    context.read<HomeBloc>().add(RespondSlotEvent(action: 'taken'));
+                    context.read<HomeBloc>().add(
+                      RespondSlotEvent(
+                        slotId: dose.slotId ?? '',
+                        action: 'taken',
+                      ),
+                    );
                   }
                 },
                 child: Container(
@@ -417,11 +428,15 @@ class _TodaysScheduleScreenState extends State<TodaysScheduleScreen> {
 class ScheduledDose {
   final Medicine medicine;
   final String time;
+  final String? slotId;
+  final String? status;
   final bool isTaken;
 
   ScheduledDose({
     required this.medicine,
     required this.time,
+    this.slotId,
+    this.status,
     required this.isTaken,
   });
 }

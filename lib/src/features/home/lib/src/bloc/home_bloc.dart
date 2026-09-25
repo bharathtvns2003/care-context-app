@@ -162,7 +162,10 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     Emitter<HomeState> emit,
   ) async {
     try {
-      await repository.respondSlot(action: event.action);
+      await repository.respondSlot(
+        slotId: event.slotId,
+        action: event.action,
+      );
       emit(SlotRespondedState());
     } catch (e) {
       emit(HomeErrorState(message: e.toString()));

@@ -47,7 +47,14 @@ class HomeMapper {
       frequencyType: model.frequencyType,
       dayOfWeek: model.dayOfWeek,
       duration: model.duration,
-      reminderTimes: model.reminderTimes,
+      reminderTimes: model.reminderTimes
+          .map((r) => ReminderTimeEntity(
+                slotId: r.slotId,
+                time: r.time,
+                scheduledAt: r.scheduledAt,
+                status: r.status,
+              ))
+          .toList(),
     );
   }
 
