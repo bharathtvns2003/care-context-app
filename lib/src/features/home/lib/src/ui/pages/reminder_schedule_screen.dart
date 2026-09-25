@@ -1,13 +1,20 @@
 import 'package:core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../bloc/home_bloc.dart';
+import '../../repository/entity/home_entity.dart';
 import '../../theme/app_colors.dart';
 import 'add_medicine_screen.dart';
 
 class ReminderScheduleScreen extends StatelessWidget {
   final List<Medicine> medicines;
+  final String? prescriptionId;
 
-  const ReminderScheduleScreen({super.key, required this.medicines});
+  const ReminderScheduleScreen({
+    super.key,
+    required this.medicines,
+    this.prescriptionId,
+  });
 
   static Map<String, dynamic> get _schema =>
       RemoteConfigService.instance.getJson('reminder_ui_config');
@@ -40,12 +47,24 @@ class ReminderScheduleScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: [
-          _buildHeader(context),
-          Expanded(child: _buildBody(context)),
-        ],
+    return BlocListener<HomeBloc, HomeState>(
+      listener: (context, state) {
+        if (state is RemindersActivatedState) {
+          context.read<HomeBloc>().add(LoadHomeDataEvent());
+          CcRouteHelper.pushAndPopUntil(CcRouteConstants.homeScreen);
+        } else if (state is HomeErrorState) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message)),
+          );
+        }
+      },
+      child: Scaffold(
+        body: Column(
+          children: [
+            _buildHeader(context),
+            Expanded(child: _buildBody(context)),
+          ],
+        ),
       ),
     );
   }
@@ -332,47 +351,103 @@ class ReminderScheduleScreen extends StatelessWidget {
   }
 
   Widget _buildActivateButton(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: 55,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment(-0.8, -0.8),
-          end: Alignment(0.8, 0.8),
-          colors: [AppColors.accentTealDark, AppColors.primaryTeal],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.accentTealDark.withValues(alpha: 0.35),
-            blurRadius: 12,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: () {
-          CcRouteHelper.pushAndPopUntil(
-            CcRouteConstants.homeScreen,
-          );
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
+    return BlocBuilder<HomeBloc, HomeState>(
+      builder: (context, state) {
+        final isLoading = state is HomeLoadingState;
+        return Container(
+          width: double.infinity,
+          height: 55,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment(-0.8, -0.8),
+              end: Alignment(0.8, 0.8),
+              colors: [AppColors.accentTealDark, AppColors.primaryTeal],
+            ),
             borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.accentTealDark.withValues(alpha: 0.35),
+                blurRadius: 12,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-        ),
-        child: Text(
-          _activateButtonSchema['text'] as String,
-          style: GoogleFonts.sora(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: AppColors.white,
+          child: ElevatedButton(
+            onPressed: isLoading ? null : () => _onActivateReminders(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            child: isLoading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2.5,
+                    ),
+                  )
+                : Text(
+                    _activateButtonSchema['text'] as String,
+                    style: GoogleFonts.sora(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.white,
+                    ),
+                  ),
           ),
-        ),
-      ),
+        );
+      },
     );
+  }
+
+  void _onActivateReminders(BuildContext context) {
+    String? pid = prescriptionId;
+    if (pid == null || pid.isEmpty) {
+      final state = context.read<HomeBloc>().state;
+      if (state is PrescriptionUploadedState) {
+        pid = state.prescriptionId;
+      }
+    }
+
+    if (pid == null || pid.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Prescription ID is required to set reminders.'),
+        ),
+      );
+      return;
+    }
+
+    final entities = medicines
+        .map((m) => MedicineEntity(
+              id: m.id,
+              name: m.name,
+              dosage: m.dosage,
+              frequency: m.frequency,
+              frequencyType: m.frequencyType,
+              dayOfWeek: m.dayOfWeek,
+              duration: m.duration,
+              reminderTimes: m.reminderTimes
+                  .map((r) => ReminderTimeEntity(
+                        slotId: r.slotId,
+                        time: r.time,
+                        scheduledAt: r.scheduledAt,
+                        status: r.status,
+                      ))
+                  .toList(),
+            ))
+        .toList();
+
+    context.read<HomeBloc>().add(
+          ActivateRemindersEvent(
+            prescriptionId: pid,
+            medicines: entities,
+          ),
+        );
   }
 
   Widget _buildEditScheduleButton(BuildContext context) {

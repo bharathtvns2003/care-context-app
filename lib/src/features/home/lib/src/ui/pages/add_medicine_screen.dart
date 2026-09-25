@@ -32,18 +32,24 @@ class ReminderTime {
 }
 
 class Medicine {
+  String? id;
   String name;
   String dosage;
   String frequency;
+  String? frequencyType;
+  String? dayOfWeek;
   String duration;
   List<ReminderTime> reminderTimes;
   bool hasWarning;
   String? warningDetail;
 
   Medicine({
+    this.id,
     this.name = '',
     this.dosage = '',
     this.frequency = 'Once daily',
+    this.frequencyType,
+    this.dayOfWeek,
     this.duration = '',
     this.reminderTimes = const [],
     this.hasWarning = false,
@@ -51,18 +57,24 @@ class Medicine {
   });
 
   Medicine copyWith({
+    String? id,
     String? name,
     String? dosage,
     String? frequency,
+    String? frequencyType,
+    String? dayOfWeek,
     String? duration,
     List<ReminderTime>? reminderTimes,
     bool? hasWarning,
     String? warningDetail,
   }) {
     return Medicine(
+      id: id ?? this.id,
       name: name ?? this.name,
       dosage: dosage ?? this.dosage,
       frequency: frequency ?? this.frequency,
+      frequencyType: frequencyType ?? this.frequencyType,
+      dayOfWeek: dayOfWeek ?? this.dayOfWeek,
       duration: duration ?? this.duration,
       reminderTimes: reminderTimes ?? this.reminderTimes,
       hasWarning: hasWarning ?? this.hasWarning,

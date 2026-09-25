@@ -1,5 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../notifications/push_notification_service.dart';
+
 class TokenManager {
   static const String _tokenKey = 'auth_token';
   static const String _refreshTokenKey = 'refresh_token';
@@ -64,6 +66,9 @@ class TokenManager {
 
   /// Alias to clear all session tokens and data on user logout.
   Future<void> clearAllOnLogout() async {
+    try {
+      await PushNotificationService.instance.unregisterDeviceToken();
+    } catch (_) {}
     await clearAll();
   }
 

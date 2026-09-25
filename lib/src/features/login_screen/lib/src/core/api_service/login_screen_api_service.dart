@@ -136,15 +136,50 @@ class LoginScreenApiService {
     required String gender,
     required String bloodType,
   }) async {
+    final userMe = await ApiService.getUserMe();
+    final consentGranted = userMe?['consentGranted'] as bool? ?? false;
+
+    if (!consentGranted) {
+      try {
+        await submitConsent();
+      } catch (e) {
+        if (e is DioException) {
+          final resData = e.response?.data;
+          String? serverMsg;
+          if (resData is Map<String, dynamic>) {
+            serverMsg = (resData['message'] ?? resData['error']) as String?;
+          }
+          throw Exception(
+            serverMsg ?? e.message ?? 'Consent required: Failed to submit consent',
+          );
+        }
+        throw Exception('Consent required: Failed to submit consent ($e)');
+      }
+    }
+
     int parsedAge = int.tryParse(age) ?? 25;
     final birthYear = DateTime.now().year - parsedAge;
     final dob = '$birthYear-01-01';
 
-    await updateUserProfile(
-      fullName: name,
-      dateOfBirth: dob,
-      gender: gender,
-    );
+    try {
+      await updateUserProfile(
+        fullName: name,
+        dateOfBirth: dob,
+        gender: gender,
+      );
+    } catch (e) {
+      if (e is DioException) {
+        final resData = e.response?.data;
+        String? serverMsg;
+        if (resData is Map<String, dynamic>) {
+          serverMsg = (resData['message'] ?? resData['error']) as String?;
+        }
+        throw Exception(
+          serverMsg ?? e.message ?? 'Failed to complete profile',
+        );
+      }
+      rethrow;
+    }
   }
 
   Future<void> saveAuthToken(String token) async {

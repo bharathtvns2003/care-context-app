@@ -77,6 +77,7 @@ class MedicineEntity {
 
   Map<String, dynamic> toApiJson() {
     return {
+      if (id != null && id!.isNotEmpty) 'medicineId': id,
       'medicineName': name,
       'dosage': dosage,
       'frequency': frequency,
@@ -85,6 +86,23 @@ class MedicineEntity {
       'duration': duration,
       'reminderTimes': reminderTimes.map((e) => e.toApiJson()).toList(),
     };
+  }
+
+  Map<String, dynamic> toActivateRemindersJson() {
+    final map = <String, dynamic>{
+      'medicineName': name,
+      'dosage': dosage.isNotEmpty ? dosage : '1-0-0',
+      'frequency': reminderTimes.length.toString(),
+      'reminderTimes': reminderTimes.map((e) => e.time).toList(),
+      'frequencyType': frequencyType ?? '1',
+    };
+    if (id != null && id!.isNotEmpty) {
+      map['medicineId'] = id;
+    }
+    if (dayOfWeek != null && dayOfWeek!.isNotEmpty) {
+      map['dayOfWeek'] = dayOfWeek;
+    }
+    return map;
   }
 }
 

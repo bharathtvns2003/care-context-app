@@ -13,6 +13,7 @@ class ApiConstants {
   static const String authRefresh = '/auth/token/refresh';
   static const String userProfile = '/user/profile';
   static const String userConsents = '/user/consents';
+  static const String userMe = '/user/me';
 
   static String prescriptionById(String id) => '/api/prescriptions/$id';
   static String prescriptionMedicines(String prescriptionId) =>

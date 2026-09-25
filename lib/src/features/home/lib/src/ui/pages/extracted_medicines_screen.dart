@@ -100,9 +100,12 @@ class _ExtractedMedicinesScreenState extends State<ExtractedMedicinesScreen> {
   }
 
   Medicine _fromEntity(MedicineEntity e) => Medicine(
+    id: e.id,
     name: e.name,
     dosage: e.dosage,
     frequency: e.frequency,
+    frequencyType: e.frequencyType,
+    dayOfWeek: e.dayOfWeek,
     duration: e.duration,
     reminderTimes: e.reminderTimes
         .map((r) => ReminderTime(
@@ -687,7 +690,10 @@ class _ExtractedMedicinesScreenState extends State<ExtractedMedicinesScreen> {
         onPressed: () {
           CcRouteHelper.push(
             CcRouteConstants.reminderSchedule,
-            args: _medicines,
+            args: {
+              'prescriptionId': _prescriptionId,
+              'medicines': _medicines,
+            },
           );
         },
         style: ElevatedButton.styleFrom(

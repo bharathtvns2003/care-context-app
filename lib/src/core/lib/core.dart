@@ -6,5 +6,6 @@ export 'src/debug/debug.dart';
 export 'src/di/service_locator.dart';
 export 'src/navigation/navigation.dart';
 export 'src/remote_config/remote_config_service.dart';
+export 'src/notifications/push_notification_service.dart';
 export 'src/utils/utils.dart';
 export 'src/packages/package_export.dart';

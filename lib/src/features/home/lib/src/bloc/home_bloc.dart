@@ -118,7 +118,10 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   ) async {
     try {
       emit(HomeLoadingState());
-      await repository.activateReminders(event.prescriptionId);
+      await repository.activateReminders(
+        prescriptionId: event.prescriptionId,
+        medicines: event.medicines,
+      );
       emit(RemindersActivatedState());
     } catch (e) {
       emit(HomeErrorState(message: e.toString()));

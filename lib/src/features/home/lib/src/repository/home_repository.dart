@@ -83,8 +83,16 @@ class HomeRepository {
         .toList();
   }
 
-  Future<void> activateReminders(String prescriptionId) async {
-    await apiService.activateReminders(prescriptionId);
+  Future<void> activateReminders({
+    required String prescriptionId,
+    required List<MedicineEntity> medicines,
+  }) async {
+    final medicinesJson =
+        medicines.map((m) => m.toActivateRemindersJson()).toList();
+    await apiService.activateReminders(
+      prescriptionId: prescriptionId,
+      medicines: medicinesJson,
+    );
   }
 
   Future<void> registerDevice({

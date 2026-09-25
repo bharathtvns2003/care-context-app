@@ -71,8 +71,6 @@ class _CcErrorBottomSheetState extends State<CcErrorBottomSheet> {
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-
         children: [
           // Drag Handle
           Center(
@@ -124,7 +122,6 @@ class _CcErrorBottomSheetState extends State<CcErrorBottomSheet> {
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: accentColor.withValues(alpha: 0.25),
-                  width: 1,
                 ),
               ),
               child: Row(
@@ -372,7 +369,9 @@ class _CcErrorBottomSheetState extends State<CcErrorBottomSheet> {
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white24,
                         borderRadius: BorderRadius.circular(6),

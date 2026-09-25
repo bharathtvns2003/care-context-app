@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  await PushNotificationService.instance.initialize();
   await RemoteConfigService.instance.initialize();
   _registerDependencies();
   AppRoutes.registerAll();

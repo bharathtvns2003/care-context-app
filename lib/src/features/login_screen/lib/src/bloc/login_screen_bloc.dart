@@ -75,11 +75,13 @@ class LoginScreenBloc extends Bloc<LoginScreenEvent, LoginScreenState> {
       final userCredential = await repository.verifyOtp(event.otp);
       final firebaseToken = await userCredential.user?.getIdToken() ?? '';
       
+      bool isNewUser = true;
       if (firebaseToken.isNotEmpty) {
-        await repository.verifyAuthWithBackend(
+        final backend = await repository.verifyAuthWithBackend(
           firebaseToken: firebaseToken,
           phoneNumber: event.phoneNumber,
         );
+        isNewUser = backend['isNewUser'] as bool? ?? true;
         try {
           await repository.submitConsent();
         } catch (_) {
@@ -87,8 +89,6 @@ class LoginScreenBloc extends Bloc<LoginScreenEvent, LoginScreenState> {
         }
       }
 
-      final isNewUser =
-          userCredential.additionalUserInfo?.isNewUser ?? true;
       emit(OtpVerifiedState(token: firebaseToken, isNewUser: isNewUser));
     } catch (e) {
       String message = 'Verification failed';
@@ -113,18 +113,18 @@ class LoginScreenBloc extends Bloc<LoginScreenEvent, LoginScreenState> {
         event.credential,
       );
       final firebaseToken = await userCredential.user?.getIdToken() ?? '';
+      bool isNewUser = true;
       if (firebaseToken.isNotEmpty) {
         final phone = userCredential.user?.phoneNumber ?? '';
-        await repository.verifyAuthWithBackend(
+        final backend = await repository.verifyAuthWithBackend(
           firebaseToken: firebaseToken,
           phoneNumber: phone,
         );
+        isNewUser = backend['isNewUser'] as bool? ?? true;
         try {
           await repository.submitConsent();
         } catch (_) {}
       }
-      final isNewUser =
-          userCredential.additionalUserInfo?.isNewUser ?? true;
       emit(OtpVerifiedState(token: firebaseToken, isNewUser: isNewUser));
     } catch (e) {
       emit(LoginScreenErrorState(message: 'Auto-verification failed'));

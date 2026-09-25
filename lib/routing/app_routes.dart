@@ -62,12 +62,24 @@ class AppRoutes {
             medicine: RouteGenerator.getArgs<Medicine>(settings),
             isEditing: RouteGenerator.getArgs<Medicine>(settings) != null,
           ),
-      CcRouteConstants.reminderSchedule: (settings) => BlocProvider.value(
-            value: getIt<HomeBloc>(),
-            child: ReminderScheduleScreen(
-              medicines: RouteGenerator.getArgsOr<List<Medicine>>(settings, []),
-            ),
+      CcRouteConstants.reminderSchedule: (settings) {
+        final args = settings.arguments;
+        List<Medicine> medicines = [];
+        String? prescriptionId;
+        if (args is List<Medicine>) {
+          medicines = args;
+        } else if (args is Map<String, dynamic>) {
+          medicines = (args['medicines'] as List<dynamic>?)?.cast<Medicine>() ?? [];
+          prescriptionId = args['prescriptionId'] as String?;
+        }
+        return BlocProvider.value(
+          value: getIt<HomeBloc>(),
+          child: ReminderScheduleScreen(
+            medicines: medicines,
+            prescriptionId: prescriptionId,
           ),
+        );
+      },
       CcRouteConstants.todaysSchedule: (settings) => BlocProvider.value(
             value: getIt<HomeBloc>(),
             child: TodaysScheduleScreen(

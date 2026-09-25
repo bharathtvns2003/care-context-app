@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:core/core.dart';
 
 class HomeApiService {
@@ -106,9 +107,19 @@ class HomeApiService {
     return response.data as Map<String, dynamic>;
   }
 
-  Future<void> activateReminders(String prescriptionId) async {
+  Future<void> activateReminders({
+    required String prescriptionId,
+    required List<Map<String, dynamic>> medicines,
+    String? platform,
+    String? timezone,
+  }) async {
     final api = await _api;
-    await api.post(ApiConstants.activateReminders(prescriptionId), data: {});
+    final body = <String, dynamic>{
+      'platform': platform ?? (Platform.isAndroid ? 'android' : 'ios'),
+      'timezone': timezone ?? 'Asia/Kolkata',
+      'medicines': medicines,
+    };
+    await api.post(ApiConstants.activateReminders(prescriptionId), data: body);
   }
 
   Future<Map<String, dynamic>> registerDevice({

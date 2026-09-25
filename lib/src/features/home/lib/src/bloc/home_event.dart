@@ -39,7 +39,11 @@ class DeleteMedicineEvent extends HomeEvent {
 
 class ActivateRemindersEvent extends HomeEvent {
   final String prescriptionId;
-  ActivateRemindersEvent({required this.prescriptionId});
+  final List<MedicineEntity> medicines;
+  ActivateRemindersEvent({
+    required this.prescriptionId,
+    required this.medicines,
+  });
 }
 
 class LoadPrescriptionsEvent extends HomeEvent {

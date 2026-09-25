@@ -28,7 +28,7 @@ class _SplashScreenPageState extends State<SplashScreenPage> {
     if (!mounted) return;
 
     if (restored) {
-      CcRouteHelper.pushAndPopUntil(CcRouteConstants.homeScreen);
+      await _navigateBasedOnProfileStatus();
       return;
     }
 
@@ -36,11 +36,23 @@ class _SplashScreenPageState extends State<SplashScreenPage> {
     if (!mounted) return;
 
     if (firebaseRestored) {
-      CcRouteHelper.pushAndPopUntil(CcRouteConstants.homeScreen);
+      await _navigateBasedOnProfileStatus();
       return;
     }
 
     CcRouteHelper.pushAndPopUntil(CcRouteConstants.phoneLogin);
+  }
+
+  Future<void> _navigateBasedOnProfileStatus() async {
+    final userMe = await ApiService.getUserMe();
+    if (!mounted) return;
+
+    final profileComplete = userMe?['profileComplete'] as bool? ?? false;
+    if (profileComplete) {
+      CcRouteHelper.pushAndPopUntil(CcRouteConstants.homeScreen);
+    } else {
+      CcRouteHelper.pushAndPopUntil(CcRouteConstants.completeProfile);
+    }
   }
 
   Future<bool> _tryRestoreFromFirebase() async {

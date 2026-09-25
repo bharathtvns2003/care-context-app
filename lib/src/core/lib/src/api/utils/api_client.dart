@@ -6,6 +6,8 @@ import 'package:flutter/foundation.dart';
 
 import '../../debug/api_log_store.dart';
 import '../../debug/debug_interceptor.dart';
+import '../../navigation/cc_route_constants.dart';
+import '../../navigation/cc_route_helper.dart';
 import 'api_constants.dart';
 import 'token_manager.dart';
 
@@ -105,6 +107,24 @@ class ApiService {
     }
   }
 
+  /// Fetches profile status for the authenticated user from GET /user/me.
+  static Future<Map<String, dynamic>?> getUserMe() async {
+    try {
+      final api = await ApiService.authenticated();
+      final response = await api.get(ApiConstants.userMe);
+      final resData = response.data;
+      if (resData is Map<String, dynamic>) {
+        final dataMap = resData['data'] is Map<String, dynamic>
+            ? resData['data'] as Map<String, dynamic>
+            : resData;
+        return dataMap;
+      }
+    } catch (e) {
+      developer.log('Failed to fetch user/me: $e');
+    }
+    return null;
+  }
+
   static bool _isJwtExpired(String token, {int skewSeconds = 30}) {
     try {
       final parts = token.split('.');
@@ -156,6 +176,7 @@ class ApiService {
 
       if (newAccessToken == null || newAccessToken.isEmpty) {
         await TokenManager.instance.clearToken();
+        CcRouteHelper.pushAndPopUntil(CcRouteConstants.phoneLogin);
         return null;
       }
 
@@ -167,6 +188,7 @@ class ApiService {
     } catch (e) {
       developer.log('Failed to refresh token: $e');
       await TokenManager.instance.clearToken();
+      CcRouteHelper.pushAndPopUntil(CcRouteConstants.phoneLogin);
       return null;
     }
   }
@@ -193,8 +215,27 @@ class ApiService {
         },
         onError: (error, handler) async {
           developer.log('ERROR: ${error.response?.statusCode}');
-          if (error.response?.statusCode == 401 &&
-              !error.requestOptions.path.contains('/auth/')) {
+
+          // 1. Check for 403 PROFILE_INCOMPLETE -> navigate to Complete Profile without retry
+          if (error.response?.statusCode == 403) {
+            final resData = error.response?.data;
+            if (resData is Map<String, dynamic> &&
+                resData['message'] == 'PROFILE_INCOMPLETE') {
+              CcRouteHelper.pushAndPopUntil(CcRouteConstants.completeProfile);
+              return handler.next(error);
+            }
+          }
+
+          // 2. Check for 401 Unauthorized
+          if (error.response?.statusCode == 401) {
+            // If /auth/token/refresh itself failed with 401
+            if (error.requestOptions.path.contains('/auth/token/refresh') ||
+                error.requestOptions.path.contains(ApiConstants.authRefresh)) {
+              await TokenManager.instance.clearToken();
+              CcRouteHelper.pushAndPopUntil(CcRouteConstants.phoneLogin);
+              return handler.next(error);
+            }
+
             final refreshToken =
                 await TokenManager.instance.getRefreshToken();
             if (refreshToken != null && refreshToken.isNotEmpty) {
@@ -212,11 +253,16 @@ class ApiService {
                         : DioException(requestOptions: opts, error: e),
                   );
                 }
+              } else {
+                await TokenManager.instance.clearToken();
+                CcRouteHelper.pushAndPopUntil(CcRouteConstants.phoneLogin);
               }
             } else {
               await TokenManager.instance.clearToken();
+              CcRouteHelper.pushAndPopUntil(CcRouteConstants.phoneLogin);
             }
           }
+
           handler.next(error);
         },
       ),
